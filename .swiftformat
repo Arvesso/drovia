@@ -6,3 +6,4 @@
 --self remove
 --stripunusedargs closure-only
 --exclude build,DerivedData
+--selfrequired debug,info,notice,warning,error,fault,log

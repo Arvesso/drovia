@@ -6,11 +6,12 @@ struct DroviaApp: App {
 
     var body: some Scene {
         MenuBarExtra("Drovia", systemImage: "circle.dashed.inset.filled") {
-            MenuBarContent()
+            MenuBarContent(folderAccess: appDelegate.folderAccess)
         }
 
         Settings {
             SettingsView()
+                .environment(appDelegate.folderAccess)
         }
     }
 }

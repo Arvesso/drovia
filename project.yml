@@ -7,6 +7,10 @@ options:
   createIntermediateGroups: true
   generateEmptyDirectories: true
 
+configFiles:
+  Debug: Config/Signing.xcconfig
+  Release: Config/Signing.xcconfig
+
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -35,11 +39,6 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         ENABLE_HARDENED_RUNTIME: NO
-        # Ad-hoc ("Sign to Run Locally"). Switch to your free Personal Team later
-        # so macOS keeps granted permissions between builds.
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "-"
-        DEVELOPMENT_TEAM: ""
 
   DroviaTests:
     type: bundle.unit-test
@@ -54,8 +53,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.arvesso.drovia.tests
         TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Drovia.app/Contents/MacOS/Drovia"
         BUNDLE_LOADER: "$(TEST_HOST)"
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "-"
 
 schemes:
   Drovia:

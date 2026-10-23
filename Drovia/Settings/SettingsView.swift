@@ -1,14 +1,31 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(FolderAccess.self) private var folderAccess
+    @State private var selection = SettingsTab.general
+
     var body: some View {
-        TabView {
-            Tab("General", systemImage: "gearshape") {
+        TabView(selection: $selection) {
+            Tab("General", systemImage: "gearshape", value: .general) {
                 GeneralSettingsView()
             }
+            Tab("Folders", systemImage: "folder", value: .folders) {
+                FoldersSettingsView()
+            }
         }
-        .frame(width: 480, height: 320)
+        .frame(width: 520, height: 440)
+        .onAppear {
+            // Until something is allowed, folders are the only setting that matters.
+            if folderAccess.folders.isEmpty {
+                selection = .folders
+            }
+        }
     }
+}
+
+private enum SettingsTab: Hashable {
+    case general
+    case folders
 }
 
 private struct GeneralSettingsView: View {

@@ -1,0 +1,8 @@
+// Default: ad-hoc signing, so anyone can build the project.
+// Run `make signing` to sign with your own Apple Development certificate instead.
+// A stable signature lets macOS remember granted permissions between builds.
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"

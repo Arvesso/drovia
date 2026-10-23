@@ -12,3 +12,6 @@ build/
 
 # macOS
 .DS_Store
+
+# Personal signing settings (see Config/Signing.xcconfig)
+Config/Local.xcconfig

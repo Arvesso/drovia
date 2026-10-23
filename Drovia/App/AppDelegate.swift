@@ -2,7 +2,10 @@ import AppKit
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    let folderAccess = FolderAccess()
+    private lazy var wheelCoordinator = WheelCoordinator(folderAccess: folderAccess)
+
     func applicationDidFinishLaunching(_: Notification) {
-        // Drag monitoring and the wheel are wired up here in phase 1.
+        wheelCoordinator.start()
     }
 }
