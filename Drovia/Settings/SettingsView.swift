@@ -9,6 +9,9 @@ struct SettingsView: View {
             Tab("General", systemImage: "gearshape", value: .general) {
                 GeneralSettingsView()
             }
+            Tab("Wheels", systemImage: "circle.dashed", value: .wheels) {
+                WheelsSettingsView()
+            }
             Tab("Files", systemImage: "doc.on.doc", value: .files) {
                 FilesSettingsView()
             }
@@ -30,7 +33,7 @@ struct SettingsView: View {
 }
 
 private enum SettingsTab: Hashable {
-    case general, files, actions, folders
+    case general, wheels, files, actions, folders
 }
 
 extension Bundle {

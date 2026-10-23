@@ -1,6 +1,26 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ %@"
+          }
+        }
+      }
+    },
+    "%@ (%@)": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ (%@)"
+          }
+        }
+      }
+    },
     "%@ failed": {
       "localizations": {
         "ru": {
@@ -287,6 +307,16 @@
         }
       }
     },
+    "Add App…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить приложение…"
+          }
+        }
+      }
+    },
     "Add BG": {
       "localizations": {
         "ru": {
@@ -377,12 +407,42 @@
         }
       }
     },
+    "Allow it in Settings → General → Keyboard": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешите в Настройках → Основные → Клавиатура"
+          }
+        }
+      }
+    },
+    "Allowed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешён"
+          }
+        }
+      }
+    },
     "Allowed Folders": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Разрешённые папки"
+          }
+        }
+      }
+    },
+    "Allow…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешить…"
           }
         }
       }
@@ -417,6 +477,16 @@
         }
       }
     },
+    "Archives": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Архивы"
+          }
+        }
+      }
+    },
     "Arrow": {
       "localizations": {
         "ru": {
@@ -443,6 +513,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пропорции"
+          }
+        }
+      }
+    },
+    "Audio": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Аудио"
           }
         }
       }
@@ -871,6 +951,16 @@
         }
       }
     },
+    "Couldn't read Finder's selection": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось получить выделение Finder"
+          }
+        }
+      }
+    },
     "Couldn't receive files": {
       "localizations": {
         "ru": {
@@ -901,6 +991,26 @@
         }
       }
     },
+    "Denied": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запрещён"
+          }
+        }
+      }
+    },
+    "Documents": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Документы"
+          }
+        }
+      }
+    },
     "Drag all files": {
       "localizations": {
         "ru": {
@@ -921,12 +1031,42 @@
         }
       }
     },
+    "Drag to reorder. Only sectors that fit the dragged files appear on the wheel.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перетаскивайте, чтобы изменить порядок. На колесе появляются только сектора, подходящие к файлам."
+          }
+        }
+      }
+    },
     "Drop files here": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Перетащите файлы сюда"
+          }
+        }
+      }
+    },
+    "Drovia can't see Finder's selection": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia не видит выделение Finder"
+          }
+        }
+      }
+    },
+    "Drovia isn't allowed to control Finder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia не разрешено управлять Finder"
           }
         }
       }
@@ -1007,6 +1147,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Файлы"
+          }
+        }
+      }
+    },
+    "Finder access": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ к Finder"
           }
         }
       }
@@ -1161,6 +1311,16 @@
         }
       }
     },
+    "Ignore Drags From": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не реагировать на перетаскивание из"
+          }
+        }
+      }
+    },
     "Images": {
       "localizations": {
         "ru": {
@@ -1197,6 +1357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сохранять метаданные при конвертации"
+          }
+        }
+      }
+    },
+    "Keyboard": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Клавиатура"
           }
         }
       }
@@ -1563,6 +1733,16 @@
         }
       }
     },
+    "Open wheel for Finder selection": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть колесо для выделения в Finder"
+          }
+        }
+      }
+    },
     "Optional. One switch instead of separate prompts, and it also covers external and network drives.": {
       "localizations": {
         "ru": {
@@ -1589,6 +1769,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Исходный размер"
+          }
+        }
+      }
+    },
+    "Other files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Другие файлы"
           }
         }
       }
@@ -1863,6 +2053,16 @@
         }
       }
     },
+    "Restore Defaults": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сбросить"
+          }
+        }
+      }
+    },
     "Reveal": {
       "localizations": {
         "ru": {
@@ -1973,6 +2173,26 @@
         }
       }
     },
+    "Select files in Finder and press the shortcut: the wheel opens at the pointer. Tab switches wheels, arrows or number keys choose an action.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выделите файлы в Finder и нажмите сочетание — колесо откроется у курсора. Tab переключает колёса, стрелки или цифры выбирают действие."
+          }
+        }
+      }
+    },
+    "Select files in Finder first": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сначала выделите файлы в Finder"
+          }
+        }
+      }
+    },
     "Settings…": {
       "localizations": {
         "ru": {
@@ -1999,6 +2219,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Путь в кавычках"
+          }
+        }
+      }
+    },
+    "Show": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показывать"
           }
         }
       }
@@ -2113,6 +2343,16 @@
         }
       }
     },
+    "Tab — next wheel  ·  ← → — choose  ·  ↩ or 1–9 — run  ·  Esc — close": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tab — следующее колесо  ·  ← → — выбор  ·  ↩ или 1–9 — запуск  ·  Esc — закрыть"
+          }
+        }
+      }
+    },
     "Terminal": {
       "localizations": {
         "ru": {
@@ -2223,6 +2463,16 @@
         }
       }
     },
+    "Useful for apps where you hold modifier keys while dragging, like design tools or games.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для приложений, где модификаторы зажимают во время перетаскивания: графические редакторы, игры."
+          }
+        }
+      }
+    },
     "Version": {
       "localizations": {
         "ru": {
@@ -2249,6 +2499,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Колесо"
+          }
+        }
+      }
+    },
+    "Wheels": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Колёса"
           }
         }
       }

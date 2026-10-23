@@ -11,6 +11,10 @@ final class WheelModel {
     var content = DragContent()
     var thumbnail: NSImage?
     var scale: CGFloat = 1
+    /// Opened with the keyboard shortcut rather than by dragging.
+    var isKeyboardMode = false
+    /// Wheels that have actions for the current files (keyboard mode switches between them).
+    var availableKinds: [WheelKind] = []
 
     var geometry: WheelGeometry {
         WheelGeometry(sectorCount: items.count, scale: scale)

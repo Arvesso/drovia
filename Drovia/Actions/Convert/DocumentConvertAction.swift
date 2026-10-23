@@ -8,6 +8,10 @@ struct DocumentConvertAction: DroviaAction {
         "convert.doc.\(format.rawValue)"
     }
 
+    var sectorID: String {
+        "convert.\(format.rawValue)"
+    }
+
     var wheel: WheelKind {
         .convert
     }

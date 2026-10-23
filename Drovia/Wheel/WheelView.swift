@@ -28,6 +28,11 @@ struct WheelView: View {
 
             CenterView(model: model)
                 .frame(width: geometry.innerRadius * 2 - 12, height: geometry.innerRadius * 2 - 12)
+
+            if model.isKeyboardMode {
+                KeyboardHints(model: model)
+                    .offset(y: geometry.outerRadius + 44)
+            }
         }
         .frame(width: geometry.panelSide, height: geometry.panelSide)
         .scaleEffect(model.isPresented ? 1 : 0.6)
@@ -89,6 +94,33 @@ private struct SectorLabel: View {
         } else {
             Text(item.title)
                 .font(.system(size: 16, weight: .bold, design: .rounded))
+        }
+    }
+}
+
+/// Which wheels exist and how to drive them, shown below the wheel in keyboard mode.
+private struct KeyboardHints: View {
+    let model: WheelModel
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 4) {
+                ForEach(WheelKind.allCases, id: \.self) { kind in
+                    Text("\(kind.modifierSymbol) \(kind.title)")
+                        .font(.system(size: 11, weight: .semibold))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .foregroundStyle(kind == model.kind ? Color.white : .primary)
+                        .background(kind == model.kind ? kind.tint : .clear, in: Capsule())
+                        .opacity(model.availableKinds.contains(kind) ? 1 : 0.35)
+                }
+            }
+            .padding(4)
+            .glassEffect(.regular, in: Capsule())
+
+            Text("Tab — next wheel  ·  ← → — choose  ·  ↩ or 1–9 — run  ·  Esc — close")
+                .font(.system(size: 10.5))
+                .foregroundStyle(.secondary)
         }
     }
 }

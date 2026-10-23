@@ -30,8 +30,11 @@ final class WheelPanel: NSPanel {
         contentView = container
     }
 
+    /// In keyboard mode the panel takes key focus (without activating Drovia) to receive key presses.
+    var acceptsKeyboard = false
+
     override var canBecomeKey: Bool {
-        false
+        acceptsKeyboard
     }
 
     override var canBecomeMain: Bool {

@@ -32,6 +32,10 @@ struct PDFConvertAction: DroviaAction {
         "convert.pdf.\(target.rawValue)"
     }
 
+    var sectorID: String {
+        target == .text ? "convert.txt" : "convert.\(target.rawValue)"
+    }
+
     var wheel: WheelKind {
         .convert
     }
@@ -175,6 +179,10 @@ struct PDFTransformAction: DroviaAction {
 
     var id: String {
         "tools.\(kind.rawValue).pdf"
+    }
+
+    var sectorID: String {
+        "tools.\(kind.rawValue)"
     }
 
     var title: String {

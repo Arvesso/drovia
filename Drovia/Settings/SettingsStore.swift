@@ -81,6 +81,15 @@ final class SettingsStore {
         didSet { defaults.set(hidesWheelOnModifierRelease, forKey: Keys.hidesWheelOnModifierRelease) }
     }
 
+    var wheelLayout: WheelLayout {
+        didSet { defaults.set(try? JSONEncoder().encode(wheelLayout), forKey: Keys.wheelLayout) }
+    }
+
+    /// Bundle IDs of apps whose drags Drovia ignores.
+    var excludedApps: [String] {
+        didSet { defaults.set(excludedApps, forKey: Keys.excludedApps) }
+    }
+
     // MARK: Output
 
     var outputLocation: OutputLocation {
@@ -201,6 +210,9 @@ final class SettingsStore {
         wheelSize = defaults.enumValue(forKey: Keys.wheelSize) ?? .medium
         activationDelay = defaults.object(forKey: Keys.activationDelay) as? Double ?? 0
         hidesWheelOnModifierRelease = defaults.object(forKey: Keys.hidesWheelOnModifierRelease) as? Bool ?? true
+        wheelLayout = defaults.data(forKey: Keys.wheelLayout)
+            .flatMap { try? JSONDecoder().decode(WheelLayout.self, from: $0) } ?? WheelLayout()
+        excludedApps = defaults.stringArray(forKey: Keys.excludedApps) ?? []
         outputLocation = defaults.enumValue(forKey: Keys.outputLocation) ?? .nextToOriginal
         outputFolderPath = defaults.string(forKey: Keys.outputFolderPath)
         fileNameTemplate = defaults.string(forKey: Keys.fileNameTemplate) ?? NamingTemplate.defaultTemplate
@@ -248,6 +260,8 @@ final class SettingsStore {
         static let wheelSize = "wheelSize"
         static let activationDelay = "activationDelay"
         static let hidesWheelOnModifierRelease = "hidesWheelOnModifierRelease"
+        static let wheelLayout = "wheelLayout"
+        static let excludedApps = "excludedApps"
         static let outputLocation = "outputLocation"
         static let outputFolderPath = "outputFolderPath"
         static let fileNameTemplate = "fileNameTemplate"

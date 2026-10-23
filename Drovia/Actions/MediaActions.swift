@@ -25,6 +25,10 @@ struct VideoConvertAction: DroviaAction {
         "convert.video.\(target.rawValue)"
     }
 
+    var sectorID: String {
+        "convert.\(target.rawValue)"
+    }
+
     var wheel: WheelKind {
         .convert
     }
@@ -77,6 +81,10 @@ struct AudioConvertAction: DroviaAction {
         "convert.audio.\(format.rawValue)"
     }
 
+    var sectorID: String {
+        "convert.\(format.rawValue)"
+    }
+
     var wheel: WheelKind {
         .convert
     }
@@ -122,6 +130,10 @@ struct VideoToolAction: DroviaAction {
 
     var id: String {
         "tools.\(kind.rawValue).video"
+    }
+
+    var sectorID: String {
+        "tools.\(kind.rawValue)"
     }
 
     var title: String {

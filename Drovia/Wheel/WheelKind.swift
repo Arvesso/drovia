@@ -26,6 +26,14 @@ enum WheelKind: String, CaseIterable, Sendable {
         }
     }
 
+    var modifierSymbol: String {
+        switch self {
+        case .convert: "⇧"
+        case .tools: "⌘"
+        case .actions: "⌃"
+        }
+    }
+
     /// Shown when no action of this wheel fits the dragged files.
     var emptyMessage: String {
         switch self {

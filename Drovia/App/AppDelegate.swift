@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -17,5 +18,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Files dragged out of the shelf can go onto the wheel too.
         shelf.onDragStart = { [weak self] in self?.wheelCoordinator.beginInternalDrag(with: $0) }
         shelf.onDragEnd = { [weak self] in self?.wheelCoordinator.endInternalDrag() }
+        KeyboardShortcuts.onKeyUp(for: .showWheel) { [weak self] in self?.wheelCoordinator.openForFinderSelection() }
     }
 }

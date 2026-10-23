@@ -32,6 +32,10 @@ struct GeneralSettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            KeyboardSection()
+
+            ExcludedAppsSection()
+
             Section {
                 LabeledContent("Version", value: Bundle.main.appVersion)
             }

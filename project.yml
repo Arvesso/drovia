@@ -25,6 +25,9 @@ packages:
   libwebp:
     url: https://github.com/SDWebImage/libwebp-Xcode
     from: 1.5.0
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: 3.0.0
 
 targets:
   Drovia:
@@ -34,12 +37,14 @@ targets:
       - path: Drovia
     dependencies:
       - package: libwebp
+      - package: KeyboardShortcuts
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.arvesso.drovia
         PRODUCT_NAME: Drovia
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSUIElement: YES
+        INFOPLIST_KEY_NSAppleEventsUsageDescription: "Drovia reads the files selected in Finder when you open the wheel with the keyboard shortcut."
         INFOPLIST_KEY_CFBundleDisplayName: Drovia
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 Arvesso. MIT License."

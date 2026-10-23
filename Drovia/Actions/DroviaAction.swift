@@ -5,6 +5,9 @@ import UniformTypeIdentifiers
 @MainActor
 protocol DroviaAction {
     var id: String { get }
+    /// The wheel sector this action appears as. Variants of one action for different file kinds
+    /// (Compress for images, PDFs and videos) share a sector, so users order and hide them together.
+    var sectorID: String { get }
     var wheel: WheelKind { get }
     var title: String { get }
     /// SF Symbol; actions without one (file formats) show their title large.
@@ -21,6 +24,10 @@ protocol DroviaAction {
 }
 
 extension DroviaAction {
+    var sectorID: String {
+        id
+    }
+
     var symbol: String? {
         nil
     }

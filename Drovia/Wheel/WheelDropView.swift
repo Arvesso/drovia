@@ -4,6 +4,9 @@ import AppKit
 final class WheelDropView: NSView {
     var onHighlight: ((Int?) -> Void)?
     var onDrop: ((Int, NSPasteboard) -> Bool)?
+    /// Keyboard mode: key presses, and clicks on a sector (`nil` outside the wheel).
+    var onKey: ((NSEvent) -> Bool)?
+    var onClick: ((Int?) -> Void)?
 
     private let model: WheelModel
 
@@ -16,6 +19,30 @@ final class WheelDropView: NSView {
     @available(*, unavailable)
     required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override var acceptsFirstResponder: Bool {
+        true
+    }
+
+    override func keyDown(with event: NSEvent) {
+        if onKey?(event) != true {
+            super.keyDown(with: event)
+        }
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .activeAlways, .inVisibleRect], owner: self))
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        onHighlight?(sector(at: convert(event.locationInWindow, from: nil)))
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        onClick?(sector(at: convert(event.locationInWindow, from: nil)))
     }
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
@@ -49,7 +76,10 @@ final class WheelDropView: NSView {
     }
 
     private func sector(for sender: any NSDraggingInfo) -> Int? {
-        let point = convert(sender.draggingLocation, from: nil)
-        return model.geometry.sector(at: CGVector(dx: point.x - bounds.midX, dy: point.y - bounds.midY))
+        sector(at: convert(sender.draggingLocation, from: nil))
+    }
+
+    private func sector(at point: NSPoint) -> Int? {
+        model.geometry.sector(at: CGVector(dx: point.x - bounds.midX, dy: point.y - bounds.midY))
     }
 }
