@@ -72,6 +72,9 @@ private struct SectorView: View {
                 .offset(x: labelRadius * sin(angle), y: -labelRadius * cos(angle))
         }
         .scaleEffect(isHighlighted ? 1.04 : 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(item.title)
+        .accessibilityAddTraits(isHighlighted ? [.isButton, .isSelected] : .isButton)
     }
 }
 

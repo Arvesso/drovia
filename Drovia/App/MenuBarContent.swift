@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MenuBarContent: View {
     let folderAccess: FolderAccess
+    let onboarding: OnboardingController
     let history: HistoryStore
     let shelf: ShelfController
     let runner: ActionRunner
@@ -9,9 +10,7 @@ struct MenuBarContent: View {
     var body: some View {
         if folderAccess.folders.isEmpty {
             Text("No folders allowed yet")
-            SettingsLink {
-                Text("Choose Folders…")
-            }
+            OpenSettingsButton("Choose Folders…")
             Divider()
         }
 
@@ -48,14 +47,36 @@ struct MenuBarContent: View {
 
         Divider()
 
-        SettingsLink {
-            Text("Settings…")
-        }
-        .keyboardShortcut(",")
+        Button("Welcome Guide…") { onboarding.show() }
+        OpenSettingsButton("Settings…")
+            .keyboardShortcut(",")
 
         Button("Quit Drovia") {
             NSApplication.shared.terminate(nil)
         }
         .keyboardShortcut("q")
+    }
+}
+
+/// Opens Settings in front of other apps. `SettingsLink` doesn't activate a menu bar app,
+/// so its window would open behind whatever app is active.
+struct OpenSettingsButton: View {
+    @Environment(\.openSettings) private var openSettings
+    private let title: LocalizedStringKey
+
+    init(_ title: LocalizedStringKey) {
+        self.title = title
+    }
+
+    var body: some View {
+        Button(title) {
+            NSApp.activate()
+            openSettings()
+            // The window may be created on the next run loop turn; bring it forward once it exists.
+            Task { @MainActor in
+                NSApp.windows.first { $0.identifier?.rawValue == "com_apple_SwiftUI_Settings_window" }?
+                    .makeKeyAndOrderFront(nil)
+            }
+        }
     }
 }

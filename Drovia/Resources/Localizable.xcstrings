@@ -367,6 +367,16 @@
         }
       }
     },
+    "Add More…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить ещё…"
+          }
+        }
+      }
+    },
     "Add Recipe": {
       "localizations": {
         "ru": {
@@ -433,6 +443,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "AirDrop недоступен"
+          }
+        }
+      }
+    },
+    "AirDrop, Shelf, Move, Terminal…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirDrop, Полка, Перемещение, Терминал…"
           }
         }
       }
@@ -587,12 +607,32 @@
         }
       }
     },
+    "Back": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Назад"
+          }
+        }
+      }
+    },
     "Background": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Фон"
+          }
+        }
+      }
+    },
+    "Background color": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цвет фона"
           }
         }
       }
@@ -787,6 +827,16 @@
         }
       }
     },
+    "Color": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цвет"
+          }
+        }
+      }
+    },
     "Compress": {
       "localizations": {
         "ru": {
@@ -803,6 +853,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сжимать в"
+          }
+        }
+      }
+    },
+    "Compress, Crop, Remove BG, Text…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сжатие, Обрезка, Удаление фона, Текст…"
           }
         }
       }
@@ -833,6 +893,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сжатие"
+          }
+        }
+      }
+    },
+    "Continue": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продолжить"
           }
         }
       }
@@ -1081,12 +1151,32 @@
         }
       }
     },
+    "Drag any file, hold a modifier key, and drop it onto a wheel to convert, edit or share it — without opening another app.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перетащите любой файл, зажмите клавишу-модификатор и бросьте его на колесо, чтобы сконвертировать, отредактировать или отправить — не открывая другие приложения."
+          }
+        }
+      }
+    },
     "Drag files and hold ⇧ to convert, ⌘ for tools or ⌃ for actions.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Перетащите файлы и зажмите ⇧ для конвертации, ⌘ для инструментов или ⌃ для действий."
+          }
+        }
+      }
+    },
+    "Drag the picture a little, hold ⇧ and drop it on JPEG. Or hold ⌘ and try Remove BG.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Потяните картинку, зажмите ⇧ и бросьте её на JPEG. Или зажмите ⌘ и попробуйте «Убрать фон»."
           }
         }
       }
@@ -1111,6 +1201,16 @@
         }
       }
     },
+    "Drovia": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia"
+          }
+        }
+      }
+    },
     "Drovia Action": {
       "localizations": {
         "ru": {
@@ -1127,6 +1227,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Рецепт Drovia"
+          }
+        }
+      }
+    },
+    "Drovia Sample": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пример Drovia"
           }
         }
       }
@@ -1161,12 +1271,32 @@
         }
       }
     },
+    "Drovia lives in the menu bar: undo, recent results and the shelf are there.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia живёт в строке меню: там отмена, недавние результаты и полка."
+          }
+        }
+      }
+    },
     "Drovia only reacts to files inside these folders, including all their subfolders. macOS may ask once for Desktop, Documents and Downloads when you add a folder containing them.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Drovia реагирует только на файлы внутри этих папок, включая все подпапки. При добавлении папки, содержащей Рабочий стол, Документы или Загрузки, macOS один раз запросит к ним доступ."
+          }
+        }
+      }
+    },
+    "Drovia only touches files inside folders you allow — including everything inside them. macOS may ask once for Desktop, Documents and Downloads.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia работает только с файлами в разрешённых папках — и во всём, что внутри них. macOS может один раз спросить про Рабочий стол, Документы и Загрузки."
           }
         }
       }
@@ -1187,6 +1317,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Эллипс"
+          }
+        }
+      }
+    },
+    "Every change can be undone; originals are never overwritten.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Любое изменение можно отменить, а оригиналы никогда не перезаписываются."
           }
         }
       }
@@ -1287,6 +1427,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Для сайта"
+          }
+        }
+      }
+    },
+    "Four wheels, four keys": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Четыре колеса, четыре клавиши"
           }
         }
       }
@@ -1521,6 +1671,16 @@
         }
       }
     },
+    "Make your own recipes and reorder wheels in Settings.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создавайте рецепты и настраивайте колёса в Настройках."
+          }
+        }
+      }
+    },
     "Markdown link": {
       "localizations": {
         "ru": {
@@ -1743,6 +1903,16 @@
         }
       }
     },
+    "Nicely done!": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отлично!"
+          }
+        }
+      }
+    },
     "No Recipe Selected": {
       "localizations": {
         "ru": {
@@ -1759,6 +1929,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нет действий для этих файлов"
+          }
+        }
+      }
+    },
+    "No background": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Без фона"
           }
         }
       }
@@ -1869,6 +2049,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Открыть"
+          }
+        }
+      }
+    },
+    "Open Drovia at login": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открывать Drovia при входе"
           }
         }
       }
@@ -1989,6 +2179,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Пикселизация"
+          }
+        }
+      }
+    },
+    "Press ⌃ after you start dragging: Control-click opens a menu in Finder.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажимайте ⌃ уже во время перетаскивания: Control-клик в Finder открывает меню."
           }
         }
       }
@@ -2453,6 +2653,16 @@
         }
       }
     },
+    "Select files in Finder and press %@ to open the wheel without dragging.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выделите файлы в Finder и нажмите %@, чтобы открыть колесо без перетаскивания."
+          }
+        }
+      }
+    },
     "Select files in Finder and press the shortcut: the wheel opens at the pointer. Tab switches wheels, arrows or number keys choose an action.": {
       "localizations": {
         "ru": {
@@ -2653,6 +2863,26 @@
         }
       }
     },
+    "Start Using Drovia": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начать работу"
+          }
+        }
+      }
+    },
+    "Start dragging, then press a key. The wheel shows only what fits your files.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начните перетаскивать, затем нажмите клавишу. Колесо показывает только то, что подходит к файлам."
+          }
+        }
+      }
+    },
     "Steps": {
       "localizations": {
         "ru": {
@@ -2703,6 +2933,16 @@
         }
       }
     },
+    "That's all there is to it. The result is saved next to the sample; click the message to see it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вот и всё. Результат сохранён рядом с примером — нажмите на сообщение, чтобы увидеть его."
+          }
+        }
+      }
+    },
     "This folder isn't allowed": {
       "localizations": {
         "ru": {
@@ -2723,12 +2963,32 @@
         }
       }
     },
+    "Tip: the sample isn't in an allowed folder — files you drag out of Drovia's own windows always work.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пример лежит вне разрешённых папок — но файлы из окон самой Drovia работают всегда."
+          }
+        }
+      }
+    },
     "Tools": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Инструменты"
+          }
+        }
+      }
+    },
+    "Try it": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Попробуйте"
           }
         }
       }
@@ -2823,6 +3083,16 @@
         }
       }
     },
+    "Welcome Guide…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Знакомство с Drovia…"
+          }
+        }
+      }
+    },
     "Wheel": {
       "localizations": {
         "ru": {
@@ -2849,6 +3119,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Подходит для: %@"
+          }
+        }
+      }
+    },
+    "You're all set": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Всё готово"
+          }
+        }
+      }
+    },
+    "Your files. One gesture away.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ваши файлы. Один жест."
+          }
+        }
+      }
+    },
+    "Your own chains of actions": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ваши цепочки действий"
           }
         }
       }

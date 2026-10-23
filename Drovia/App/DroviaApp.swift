@@ -8,6 +8,7 @@ struct DroviaApp: App {
         MenuBarExtra("Drovia", systemImage: "circle.dashed.inset.filled") {
             MenuBarContent(
                 folderAccess: appDelegate.folderAccess,
+                onboarding: appDelegate.onboarding,
                 history: appDelegate.history,
                 shelf: appDelegate.shelf,
                 runner: appDelegate.runner
@@ -19,5 +20,7 @@ struct DroviaApp: App {
                 .environment(appDelegate.folderAccess)
                 .environment(appDelegate.settings)
         }
+        // Drovia runs in the background: no window should come back on its own after a restart or login.
+        .restorationBehavior(.disabled)
     }
 }

@@ -64,6 +64,10 @@ enum MetadataRemoval: String, CaseIterable, Identifiable, Sendable {
 final class SettingsStore {
     // MARK: General
 
+    var hasCompletedOnboarding: Bool {
+        didSet { defaults.set(hasCompletedOnboarding, forKey: Keys.hasCompletedOnboarding) }
+    }
+
     var launchAtLogin: Bool {
         didSet { updateLaunchAtLogin() }
     }
@@ -210,6 +214,7 @@ final class SettingsStore {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
         launchAtLogin = SMAppService.mainApp.status == .enabled
         wheelSize = defaults.enumValue(forKey: Keys.wheelSize) ?? .medium
         activationDelay = defaults.object(forKey: Keys.activationDelay) as? Double ?? 0
@@ -263,6 +268,7 @@ final class SettingsStore {
     }
 
     private enum Keys {
+        static let hasCompletedOnboarding = "hasCompletedOnboarding"
         static let wheelSize = "wheelSize"
         static let activationDelay = "activationDelay"
         static let hidesWheelOnModifierRelease = "hidesWheelOnModifierRelease"

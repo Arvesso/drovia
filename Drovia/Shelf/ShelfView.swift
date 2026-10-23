@@ -138,6 +138,10 @@ private struct ShelfRow: View {
         .frame(height: 46)
         .background(isHovered ? Color.primary.opacity(0.06) : .clear, in: RoundedRectangle(cornerRadius: 10))
         .onHover { isHovered = $0 }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(item.url.lastPathComponent)
+        .accessibilityAction(named: Text("Open")) { NSWorkspace.shared.open(item.url) }
+        .accessibilityAction(named: Text("Remove from Shelf")) { controller.remove([item.id]) }
         .task(id: item.url) {
             thumbnail = await Thumbnails.image(for: DragContent(fileURLs: [item.url]), side: 34)
         }

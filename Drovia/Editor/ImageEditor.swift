@@ -37,6 +37,7 @@ final class ImageEditor: NSObject, NSWindowDelegate {
         window.contentViewController = NSHostingController(rootView: EditorView(model: model))
         window.setContentSize(NSSize(width: 1040, height: 740))
         window.isReleasedWhenClosed = false
+        window.isRestorable = false
         window.delegate = self
         window.title = files[0].lastPathComponent
         model.onFinish = { [weak self] results in

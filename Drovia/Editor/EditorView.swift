@@ -121,6 +121,8 @@ struct EditorView: View {
                     }
                     .buttonStyle(.plain)
                     .help(tool.title)
+                    .accessibilityLabel(tool.title)
+                    .accessibilityAddTraits(model.tool == tool ? .isSelected : [])
                 }
             }
 
@@ -139,6 +141,8 @@ struct EditorView: View {
                             .frame(width: 18, height: 18)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Color"))
+                    .accessibilityAddTraits(model.color == color ? .isSelected : [])
                 }
             }
 
@@ -172,6 +176,8 @@ struct EditorView: View {
                         FillSwatch(fill: fill, isSelected: model.background.fill == fill)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(fill == .none ? Text("No background") : Text("Background color"))
+                    .accessibilityAddTraits(model.background.fill == fill ? .isSelected : [])
                 }
             }
 
