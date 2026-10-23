@@ -14,7 +14,8 @@ struct WheelGeometry: Equatable, Sendable {
     init(sectorCount: Int, scale: CGFloat = 1) {
         self.sectorCount = sectorCount
         innerRadius = 64 * scale
-        outerRadius = 170 * scale
+        // Beyond eight sectors the ring grows so labels keep their room.
+        outerRadius = (170 + CGFloat(max(0, sectorCount - 8)) * 14) * scale
     }
 
     var sectorAngle: Double {

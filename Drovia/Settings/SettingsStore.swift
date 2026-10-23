@@ -99,6 +99,10 @@ final class SettingsStore {
         didSet { defaults.set(trashesOriginals, forKey: Keys.trashesOriginals) }
     }
 
+    var addsResultsToShelf: Bool {
+        didSet { defaults.set(addsResultsToShelf, forKey: Keys.addsResultsToShelf) }
+    }
+
     // MARK: Images
 
     var imageQuality: Double {
@@ -156,6 +160,7 @@ final class SettingsStore {
         outputFolderPath = defaults.string(forKey: Keys.outputFolderPath)
         fileNameTemplate = defaults.string(forKey: Keys.fileNameTemplate) ?? NamingTemplate.defaultTemplate
         trashesOriginals = defaults.bool(forKey: Keys.trashesOriginals)
+        addsResultsToShelf = defaults.bool(forKey: Keys.addsResultsToShelf)
         imageQuality = defaults.object(forKey: Keys.imageQuality) as? Double ?? 0.8
         keepsMetadataOnConvert = defaults.object(forKey: Keys.keepsMetadataOnConvert) as? Bool ?? true
         compressMaxDimension = defaults.integer(forKey: Keys.compressMaxDimension)
@@ -195,6 +200,7 @@ final class SettingsStore {
         static let outputFolderPath = "outputFolderPath"
         static let fileNameTemplate = "fileNameTemplate"
         static let trashesOriginals = "trashesOriginals"
+        static let addsResultsToShelf = "addsResultsToShelf"
         static let imageQuality = "imageQuality"
         static let keepsMetadataOnConvert = "keepsMetadataOnConvert"
         static let compressMaxDimension = "compressMaxDimension"

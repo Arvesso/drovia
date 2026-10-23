@@ -15,27 +15,33 @@ final class WheelCoordinator {
     private let dragMonitor = DragSessionMonitor()
     private let modifierWatcher = ModifierWatcher()
     private let model = WheelModel()
-    private let toast = ToastPresenter()
-    private lazy var runner = ActionRunner(settings: settings, toast: toast)
+    private let runner: ActionRunner
+    private let toast: ToastPresenter
     private lazy var panel = makePanel()
 
     private var showTask: Task<Void, Never>?
     private var hideTask: Task<Void, Never>?
+    /// Whether the panel is (or is about to be) on screen. Set synchronously, unlike the animated
+    /// `model.isPresented`, so overlapping show and hide requests can't leave it inconsistent.
+    private var isWheelShown = false
+    /// Bumped on every presentation; a hide that was scheduled earlier must not hide a newer wheel.
+    private var presentation = 0
     private var thumbnailTask: Task<Void, Never>?
     /// Whether the current drag comes only from allowed folders.
     private var isDragAllowed = false
     private var didWarnThisDrag = false
 
-    init(folderAccess: FolderAccess, settings: SettingsStore) {
+    init(folderAccess: FolderAccess, settings: SettingsStore, runner: ActionRunner, toast: ToastPresenter) {
         self.folderAccess = folderAccess
         self.settings = settings
+        self.runner = runner
+        self.toast = toast
     }
 
     func start() {
         dragMonitor.onStart = { [weak self] in self?.dragStarted(with: $0) }
         dragMonitor.onEnd = { [weak self] in self?.dragEnded() }
         modifierWatcher.onChange = { [weak self] in self?.modifierChanged(to: $0) }
-        modifierWatcher.onMouseReleased = { [weak self] in self?.dragMonitor.endSession() }
         dragMonitor.start()
     }
 
@@ -48,8 +54,25 @@ final class WheelCoordinator {
 
     // MARK: - Drag lifecycle
 
-    private func dragStarted(with content: DragContent) {
-        isDragAllowed = folderAccess.allows(content)
+    /// A drag started by Drovia itself (from the shelf), which global monitors don't report.
+    /// Files on the shelf were put there by the user, so they're always allowed.
+    func beginInternalDrag(with urls: [URL]) {
+        dragStarted(with: DragContent(fileURLs: urls), trusted: true)
+    }
+
+    func endInternalDrag() {
+        dragMonitor.resynchronize()
+        dragEnded()
+    }
+
+    private func dragStarted(with content: DragContent, trusted: Bool = false) {
+        // A wheel still fading out from the previous drag goes away now; this drag gets a fresh one.
+        showTask?.cancel()
+        hideTask?.cancel()
+        if isWheelShown {
+            hideWheelImmediately()
+        }
+        isDragAllowed = trusted || folderAccess.allows(content)
         didWarnThisDrag = false
         model.content = content
         model.thumbnail = nil
@@ -99,13 +122,15 @@ final class WheelCoordinator {
             model.items = items
             model.highlighted = nil
         }
-        guard !model.isPresented else { return }
+        guard !isWheelShown else { return }
         let delay = settings.activationDelay
+        guard delay > 0 else {
+            presentWheel()
+            return
+        }
         showTask = Task {
-            if delay > 0 {
-                try? await Task.sleep(for: .seconds(delay))
-                guard !Task.isCancelled else { return }
-            }
+            try? await Task.sleep(for: .seconds(delay))
+            guard !Task.isCancelled else { return }
             presentWheel()
         }
     }
@@ -120,10 +145,17 @@ final class WheelCoordinator {
 
     private func presentWheel() {
         Logger.wheel.debug("Presenting \(self.model.kind.rawValue) wheel")
+        isWheelShown = true
+        presentation += 1
+        let current = presentation
         model.highlighted = nil
+        model.isPresented = false
         panel.present(at: NSEvent.mouseLocation, geometry: model.geometry)
         // Flip on the next run loop turn so SwiftUI animates from the hidden state.
-        Task { model.isPresented = true }
+        Task {
+            guard presentation == current, isWheelShown else { return }
+            model.isPresented = true
+        }
     }
 
     private func scheduleHide(after delay: Duration) {
@@ -136,12 +168,23 @@ final class WheelCoordinator {
     }
 
     private func hideWheel() async {
-        guard model.isPresented else { return }
+        guard isWheelShown else { return }
+        isWheelShown = false
+        let current = presentation
         model.isPresented = false
         try? await Task.sleep(for: Self.hideAnimation)
-        guard !model.isPresented else { return }
+        // Shown again while fading out: leave the new wheel alone.
+        guard presentation == current, !isWheelShown else { return }
         panel.orderOut(nil)
         model.highlighted = nil
+    }
+
+    private func hideWheelImmediately() {
+        isWheelShown = false
+        presentation += 1
+        model.isPresented = false
+        model.highlighted = nil
+        panel.orderOut(nil)
     }
 
     private func highlight(_ index: Int?) {

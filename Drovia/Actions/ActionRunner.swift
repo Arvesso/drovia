@@ -1,7 +1,7 @@
 import AppKit
 import os
 
-/// Runs an action on dropped files, with progress and a summary toast.
+/// Runs an action on dropped files, with progress, a summary toast, history and undo.
 @MainActor
 final class ActionRunner {
     /// Quick actions finish without ever showing progress.
@@ -9,10 +9,14 @@ final class ActionRunner {
 
     private let settings: SettingsStore
     private let toast: ToastPresenter
+    private let history: HistoryStore
+    private let shelf: ShelfController
 
-    init(settings: SettingsStore, toast: ToastPresenter) {
+    init(settings: SettingsStore, toast: ToastPresenter, history: HistoryStore, shelf: ShelfController) {
         self.settings = settings
         self.toast = toast
+        self.history = history
+        self.shelf = shelf
     }
 
     func run(_ action: any DroviaAction, on files: [URL]) async {
@@ -28,7 +32,7 @@ final class ActionRunner {
             guard !Task.isCancelled else { return }
             toast.showProgress(action.progressTitle, fraction: progress.fraction, tint: tint)
         }
-        let context = ActionContext(settings: settings, planner: planner) { [toast] fraction in
+        let context = ActionContext(settings: settings, planner: planner, shelf: shelf) { [toast] fraction in
             progress.fraction = fraction
             if toast.isShowingProgress {
                 toast.showProgress(action.progressTitle, fraction: fraction, tint: tint)
@@ -36,13 +40,20 @@ final class ActionRunner {
         }
 
         do {
-            let result = try await action.perform(files, context: context)
+            var result = try await action.perform(files, context: context)
             progressTask.cancel()
             Logger.wheel.info("\(action.id): \(result.outputs.count) output(s), \(result.failures.count) failure(s)")
-            if action.producesFiles, settings.trashesOriginals {
-                trashOriginals(of: result)
+            if action.producesFiles {
+                result.undo += result.outputs.map(UndoStep.trashCreated)
+                if settings.trashesOriginals {
+                    result.undo += trashOriginals(of: result)
+                }
+                if settings.addsResultsToShelf, !result.outputs.isEmpty {
+                    shelf.add(result.outputs)
+                }
             }
-            showSummary(of: result, action: action)
+            let entry = record(result, of: action, fileCount: files.count)
+            showSummary(of: result, action: action, undoable: entry)
         } catch is CancellationError {
             progressTask.cancel()
             toast.hide()
@@ -52,6 +63,22 @@ final class ActionRunner {
             toast.showError(String(localized: "\(action.title) failed"), detail: error.localizedDescription)
         }
     }
+
+    func undo(_ entry: HistoryEntry) {
+        do {
+            try history.undo(entry.id)
+            toast.show(
+                String(localized: "Undone"),
+                detail: entry.title,
+                symbol: "arrow.uturn.backward.circle.fill",
+                tint: .secondary
+            )
+        } catch {
+            toast.showError(String(localized: "Couldn't undo everything"), detail: error.localizedDescription)
+        }
+    }
+
+    // MARK: - Private
 
     private func outputLocation(for action: any DroviaAction) async -> OutputPlanner.Location? {
         guard action.producesFiles else { return .nextToOriginal }
@@ -68,23 +95,35 @@ final class ActionRunner {
         }
     }
 
-    private func trashOriginals(of result: ActionResult) {
-        for file in result.processed where file.output != nil {
+    private func trashOriginals(of result: ActionResult) -> [UndoStep] {
+        result.processed.filter { $0.output != nil }.compactMap { file in
+            var trashed: NSURL?
             do {
-                try FileManager.default.trashItem(at: file.source, resultingItemURL: nil)
+                try FileManager.default.trashItem(at: file.source, resultingItemURL: &trashed)
             } catch {
                 Logger.wheel.error("Couldn't trash \(file.source.lastPathComponent): \(error.localizedDescription)")
             }
+            return (trashed as URL?).map { .restore(trashed: $0, original: file.source) }
         }
     }
 
-    private func showSummary(of result: ActionResult, action: any DroviaAction) {
+    /// Only operations that changed files are worth keeping in history.
+    private func record(_ result: ActionResult, of action: any DroviaAction, fileCount: Int) -> HistoryEntry? {
+        guard !result.undo.isEmpty else { return nil }
+        let title = fileCount == 1
+            ? "\(action.title) · \(result.processed.first?.source.lastPathComponent ?? "")"
+            : "\(action.title) · \(String(localized: "\(fileCount) files"))"
+        return history.add(title: title, symbol: action.symbol ?? "doc", outputs: result.outputs, undo: result.undo)
+    }
+
+    private func showSummary(of result: ActionResult, action: any DroviaAction, undoable entry: HistoryEntry?) {
         guard result.showsConfirmation else {
             toast.hide()
             return
         }
         let tint = action.wheel.tint
         let outputs = result.outputs
+        let undo: (() -> Void)? = entry.map { entry in { [weak self] in self?.undo(entry) } }
 
         if !result.failures.isEmpty {
             let total = result.processed.count + result.failures.count
@@ -96,7 +135,7 @@ final class ActionRunner {
         }
 
         if let message = result.message {
-            toast.show(message, detail: result.detail, tint: tint, reveal: outputs)
+            toast.show(message, detail: result.detail, tint: tint, reveal: outputs, undo: undo)
         } else if outputs.count == 1, let processed = result.processed.first(where: { $0.output != nil }),
                   let output = processed.output
         {
@@ -104,7 +143,8 @@ final class ActionRunner {
                 output.lastPathComponent,
                 detail: Self.sizeChange(from: processed.source, to: output),
                 tint: tint,
-                reveal: outputs
+                reveal: outputs,
+                undo: undo
             )
         } else if outputs.isEmpty {
             toast.show(String(localized: "Nothing to change"), detail: nil, tint: tint)
@@ -113,7 +153,8 @@ final class ActionRunner {
                 String(localized: "\(outputs.count) files done"),
                 detail: String(localized: "Click to show in Finder"),
                 tint: tint,
-                reveal: outputs
+                reveal: outputs,
+                undo: undo
             )
         }
     }
@@ -123,7 +164,7 @@ final class ActionRunner {
         guard let after = output.fileSize else { return nil }
         let style = ByteCountFormatStyle(style: .file)
         let afterText = Int64(after).formatted(style)
-        guard let before = source.fileSize, before > 0 else { return afterText }
+        guard let before = source.fileSize, before > 0, !output.hasDirectoryPath else { return afterText }
         let change = Double(after - before) / Double(before)
         let percent = change.formatted(.percent.precision(.fractionLength(0)).sign(strategy: .always()))
         return "\(Int64(before).formatted(style)) → \(afterText) (\(percent))"

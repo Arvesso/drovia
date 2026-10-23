@@ -32,6 +32,7 @@ struct MoveAction: DroviaAction {
                 let destination = folder.appendingPathComponent(fileName)
                 try FileManager.default.moveItem(at: file, to: destination)
                 result.processed.append(ProcessedFile(source: file, output: destination))
+                result.undo.append(.moveBack(from: destination, to: file))
             } catch {
                 result.failures.append(ActionFailure(file: file, message: error.localizedDescription))
             }

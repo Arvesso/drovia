@@ -6,10 +6,13 @@ import SwiftUI
 @MainActor
 final class ToastPresenter {
     private static let displayDuration = Duration.seconds(2.4)
+    /// Longer, so there's time to reach the Undo button.
+    private static let undoableDisplayDuration = Duration.seconds(4)
 
     private let model = ToastModel()
     private var hideTask: Task<Void, Never>?
     private var revealURLs: [URL] = []
+    private var undoHandler: (() -> Void)?
 
     private lazy var panel: NSPanel = {
         let panel = NSPanel(
@@ -23,7 +26,11 @@ final class ToastPresenter {
         panel.hasShadow = false
         panel.level = .popUpMenu
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
-        panel.contentView = NSHostingView(rootView: ToastView(model: model) { [weak self] in self?.revealAndHide() })
+        panel.contentView = NSHostingView(rootView: ToastView(
+            model: model,
+            onClick: { [weak self] in self?.revealAndHide() },
+            onUndo: { [weak self] in self?.performUndo() }
+        ))
         return panel
     }()
 
@@ -36,10 +43,11 @@ final class ToastPresenter {
         detail: String? = nil,
         symbol: String = "checkmark.circle.fill",
         tint: Color,
-        reveal: [URL] = []
+        reveal: [URL] = [],
+        undo: (() -> Void)? = nil
     ) {
-        present(title: title, detail: detail, symbol: symbol, tint: tint, progress: nil, reveal: reveal)
-        scheduleHide()
+        present(title: title, detail: detail, symbol: symbol, tint: tint, progress: nil, reveal: reveal, undo: undo)
+        scheduleHide(after: undo == nil ? Self.displayDuration : Self.undoableDisplayDuration)
     }
 
     func showError(_ title: String, detail: String?, reveal: [URL] = []) {
@@ -50,7 +58,7 @@ final class ToastPresenter {
     func showProgress(_ title: String, fraction: Double, tint: Color) {
         hideTask?.cancel()
         let percent = fraction.formatted(.percent.precision(.fractionLength(0)))
-        present(title: title, detail: percent, symbol: "", tint: tint, progress: fraction, reveal: [])
+        present(title: title, detail: percent, symbol: "", tint: tint, progress: fraction, reveal: [], undo: nil)
     }
 
     func hide() {
@@ -69,7 +77,8 @@ final class ToastPresenter {
         symbol: String,
         tint: Color,
         progress: Double?,
-        reveal: [URL]
+        reveal: [URL],
+        undo: (() -> Void)?
     ) {
         model.title = title
         model.detail = detail
@@ -77,8 +86,10 @@ final class ToastPresenter {
         model.tint = tint
         model.progress = progress
         model.isClickable = !reveal.isEmpty
+        model.canUndo = undo != nil
         revealURLs = reveal
-        panel.ignoresMouseEvents = reveal.isEmpty
+        undoHandler = undo
+        panel.ignoresMouseEvents = reveal.isEmpty && undo == nil
 
         if !model.isVisible {
             let mouse = NSEvent.mouseLocation
@@ -89,13 +100,19 @@ final class ToastPresenter {
         model.isVisible = true
     }
 
-    private func scheduleHide() {
+    private func scheduleHide(after duration: Duration) {
         hideTask?.cancel()
         hideTask = Task {
-            try? await Task.sleep(for: Self.displayDuration)
+            try? await Task.sleep(for: duration)
             guard !Task.isCancelled else { return }
             hide()
         }
+    }
+
+    private func performUndo() {
+        let handler = undoHandler
+        undoHandler = nil
+        handler?()
     }
 
     private func revealAndHide() {
@@ -114,12 +131,14 @@ private final class ToastModel {
     var tint = Color.accentColor
     var progress: Double?
     var isClickable = false
+    var canUndo = false
     var isVisible = false
 }
 
 private struct ToastView: View {
     let model: ToastModel
     let onClick: () -> Void
+    let onUndo: () -> Void
 
     var body: some View {
         HStack(spacing: 10) {
@@ -145,6 +164,13 @@ private struct ToastView: View {
             }
             .lineLimit(1)
             .truncationMode(.middle)
+
+            if model.canUndo {
+                Button("Undo", action: onUndo)
+                    .buttonStyle(.glass)
+                    .controlSize(.small)
+                    .padding(.leading, 4)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

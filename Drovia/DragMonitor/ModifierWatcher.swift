@@ -1,13 +1,12 @@
 import AppKit
 
-/// Polls modifier keys and the mouse button while a drag is in progress.
+/// Polls modifier keys while a drag is in progress.
 ///
-/// Polling `NSEvent.modifierFlags` needs no Accessibility or Input Monitoring permission,
-/// unlike a global key-event monitor.
+/// Reads the session-wide keyboard state from Core Graphics: it needs no permissions and, unlike
+/// `NSEvent.modifierFlags`, stays current while Drovia is a background app during another app's drag.
 @MainActor
 final class ModifierWatcher {
     var onChange: ((WheelKind?) -> Void)?
-    var onMouseReleased: (() -> Void)?
 
     private var timer: Timer?
     private var current: WheelKind?
@@ -29,12 +28,8 @@ final class ModifierWatcher {
     }
 
     private func tick() {
-        // Safety net in case the global mouse-up event was missed.
-        if NSEvent.pressedMouseButtons & 1 == 0 {
-            onMouseReleased?()
-            return
-        }
-        let kind = WheelKind(modifiers: NSEvent.modifierFlags)
+        let flags = NSEvent.ModifierFlags(rawValue: UInt(CGEventSource.flagsState(.combinedSessionState).rawValue))
+        let kind = WheelKind(modifiers: flags)
         guard kind != current else { return }
         current = kind
         onChange?(kind)

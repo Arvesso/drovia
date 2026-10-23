@@ -30,6 +30,7 @@ struct FilesSettingsView: View {
                 }
                 TextField("File name", text: $settings.fileNameTemplate, prompt: Text(NamingTemplate.defaultTemplate))
                 Toggle("Move originals to the Trash", isOn: $settings.trashesOriginals)
+                Toggle("Add results to the shelf", isOn: $settings.addsResultsToShelf)
             }
 
             Section {

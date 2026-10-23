@@ -40,6 +40,11 @@ struct DragContent: Equatable, Sendable {
     }
 
     init() {}
+
+    init(fileURLs: [URL]) {
+        self.fileURLs = fileURLs
+        itemCount = fileURLs.count
+    }
 }
 
 extension NSPasteboard {

@@ -3,15 +3,36 @@ import UniformTypeIdentifiers
 /// All actions, grouped into wheels.
 @MainActor
 enum ActionRegistry {
-    static let all: [any DroviaAction] = ImageFormat.convertTargets.map(ImageConvertAction.init) + [
+    /// Wheel order follows this list. Actions for different file kinds share a wheel,
+    /// but only those that fit the dragged files appear.
+    static let all: [any DroviaAction] = convert + tools + fileActions
+
+    private static let convert: [any DroviaAction] =
+        ImageFormat.convertTargets.map(ImageConvertAction.init)
+            + PDFConvertAction.Target.allCases.map(PDFConvertAction.init)
+            + DocumentFormat.allCases.map(DocumentConvertAction.init)
+
+    private static let tools: [any DroviaAction] = [
         CompressAction(),
-        RemoveMetadataAction(),
+        PDFTransformAction(kind: .compress),
         ResizeAction(),
+        PDFMergeAction(),
+        PDFSplitAction(),
         RotateAction(),
+        PDFTransformAction(kind: .rotate),
+        RemoveMetadataAction(),
+        PDFTransformAction(kind: .metadata),
+        ChecksumAction(),
+    ]
+
+    private static let fileActions: [any DroviaAction] = [
         AirDropAction(),
+        FloatAction(),
         CopyAction(),
         MoveAction(),
         CopyPathAction(),
+        ZipAction(),
+        UnzipAction(),
         TerminalAction(),
         RevealAction(),
         OpenWithAction(),

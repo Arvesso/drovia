@@ -55,6 +55,8 @@ struct ActionResult {
     var detail: String?
     /// Off for actions with their own visible effect (a share sheet, a new window).
     var showsConfirmation = true
+    /// How to revert the action, beyond trashing the files it created (which the runner adds itself).
+    var undo: [UndoStep] = []
 
     static let silent = ActionResult(showsConfirmation: false)
 
@@ -68,6 +70,7 @@ struct ActionResult {
 struct ActionContext {
     let settings: SettingsStore
     let planner: OutputPlanner
+    let shelf: ShelfController
     let reportProgress: (Double) -> Void
 
     /// Runs `work` for every file in parallel, reporting progress and collecting failures.
