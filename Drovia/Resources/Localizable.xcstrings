@@ -1,0 +1,26 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "General" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Основные" } }
+      }
+    },
+    "Quit Drovia" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Завершить Drovia" } }
+      }
+    },
+    "Settings…" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Настройки…" } }
+      }
+    },
+    "Version" : {
+      "localizations" : {
+        "ru" : { "stringUnit" : { "state" : "translated", "value" : "Версия" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}
