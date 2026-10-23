@@ -64,6 +64,21 @@ struct FilesSettingsView: View {
                 }
             }
 
+            Section {
+                Toggle("Remove BG: crop to the subject", isOn: $settings.removeBackgroundCrops)
+                Picker("Redact with", selection: $settings.redactionStyle) {
+                    ForEach(RedactionStyle.allCases) { Text($0.title).tag($0) }
+                }
+                Toggle("Redact faces", isOn: $settings.redactsFaces)
+                Toggle("Redact emails, phone numbers, links and card numbers", isOn: $settings.redactsPersonalText)
+                Toggle("Redact QR codes and barcodes", isOn: $settings.redactsCodes)
+            } header: {
+                Text("Smart Tools")
+            } footer: {
+                Text("A black box is the safest: pixelated or blurred text can sometimes be recovered.")
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Video") {
                 Picker("Compress to", selection: $settings.videoCompression) {
                     ForEach(VideoCompression.allCases) { Text($0.title).tag($0) }

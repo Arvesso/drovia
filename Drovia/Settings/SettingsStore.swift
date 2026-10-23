@@ -130,6 +130,40 @@ final class SettingsStore {
         didSet { defaults.set(metadataRemoval.rawValue, forKey: Keys.metadataRemoval) }
     }
 
+    var removeBackgroundCrops: Bool {
+        didSet { defaults.set(removeBackgroundCrops, forKey: Keys.removeBackgroundCrops) }
+    }
+
+    var redactionStyle: RedactionStyle {
+        didSet { defaults.set(redactionStyle.rawValue, forKey: Keys.redactionStyle) }
+    }
+
+    var redactsFaces: Bool {
+        didSet { defaults.set(redactsFaces, forKey: Keys.redactsFaces) }
+    }
+
+    var redactsPersonalText: Bool {
+        didSet { defaults.set(redactsPersonalText, forKey: Keys.redactsPersonalText) }
+    }
+
+    var redactsCodes: Bool {
+        didSet { defaults.set(redactsCodes, forKey: Keys.redactsCodes) }
+    }
+
+    var redactionTargets: RedactionTargets {
+        var targets: RedactionTargets = []
+        if redactsFaces {
+            targets.insert(.faces)
+        }
+        if redactsPersonalText {
+            targets.insert(.personalText)
+        }
+        if redactsCodes {
+            targets.insert(.codes)
+        }
+        return targets
+    }
+
     // MARK: Video
 
     var videoCompression: VideoCompression {
@@ -178,6 +212,11 @@ final class SettingsStore {
         compressRemovesMetadata = defaults.object(forKey: Keys.compressRemovesMetadata) as? Bool ?? true
         resizePreset = defaults.enumValue(forKey: Keys.resizePreset) ?? .half
         metadataRemoval = defaults.enumValue(forKey: Keys.metadataRemoval) ?? .all
+        removeBackgroundCrops = defaults.bool(forKey: Keys.removeBackgroundCrops)
+        redactionStyle = defaults.enumValue(forKey: Keys.redactionStyle) ?? .blackBox
+        redactsFaces = defaults.object(forKey: Keys.redactsFaces) as? Bool ?? true
+        redactsPersonalText = defaults.object(forKey: Keys.redactsPersonalText) as? Bool ?? true
+        redactsCodes = defaults.object(forKey: Keys.redactsCodes) as? Bool ?? true
         videoCompression = defaults.enumValue(forKey: Keys.videoCompression) ?? .hevc1080
         gifWidth = defaults.object(forKey: Keys.gifWidth) as? Int ?? 480
         terminalApp = defaults.enumValue(forKey: Keys.terminalApp) ?? .terminal
@@ -220,6 +259,11 @@ final class SettingsStore {
         static let compressRemovesMetadata = "compressRemovesMetadata"
         static let resizePreset = "resizePreset"
         static let metadataRemoval = "metadataRemoval"
+        static let removeBackgroundCrops = "removeBackgroundCrops"
+        static let redactionStyle = "redactionStyle"
+        static let redactsFaces = "redactsFaces"
+        static let redactsPersonalText = "redactsPersonalText"
+        static let redactsCodes = "redactsCodes"
         static let videoCompression = "videoCompression"
         static let gifWidth = "gifWidth"
         static let terminalApp = "terminalApp"

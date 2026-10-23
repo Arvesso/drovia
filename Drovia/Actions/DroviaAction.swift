@@ -13,6 +13,8 @@ protocol DroviaAction {
     var progressTitle: String { get }
     /// Whether the action writes new files (and so needs an output location).
     var producesFiles: Bool { get }
+    /// Waits for the user (an editor window), so no progress is shown meanwhile.
+    var isInteractive: Bool { get }
 
     func supports(_ types: [UTType]) -> Bool
     func perform(_ files: [URL], context: ActionContext) async throws -> ActionResult
@@ -28,6 +30,10 @@ extension DroviaAction {
     }
 
     var producesFiles: Bool {
+        false
+    }
+
+    var isInteractive: Bool {
         false
     }
 

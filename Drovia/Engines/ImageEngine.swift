@@ -85,6 +85,11 @@ enum ImageEngine {
         try encode(rotated, properties: image.metadataWithoutOrientation, as: format, to: destination, quality: 0.95)
     }
 
+    /// Decoded pixels as displayed (orientation applied), optionally downscaled.
+    static func loadImage(_ url: URL, maxPixelSize: Int? = nil) throws -> CGImage {
+        try SourceImage(url: url).orientedPixels(maxPixelSize: maxPixelSize)
+    }
+
     /// Pixel size of the image as displayed (orientation applied).
     static func pixelSize(of url: URL) throws -> CGSize {
         try SourceImage(url: url).orientedSize

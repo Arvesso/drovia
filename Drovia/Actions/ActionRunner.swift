@@ -29,7 +29,7 @@ final class ActionRunner {
         let progress = ProgressBox()
         let progressTask = Task {
             try? await Task.sleep(for: Self.progressDelay)
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, !action.isInteractive else { return }
             toast.showProgress(action.progressTitle, fraction: progress.fraction, tint: tint)
         }
         let context = ActionContext(settings: settings, planner: planner, shelf: shelf) { [toast] fraction in

@@ -164,11 +164,19 @@ struct ActionRegistryTests {
         ])
         #expect(titles(.tools, ["pdf"]) == [
             "tools.compress.pdf",
+            "tools.text",
             "tools.split",
             "tools.rotate.pdf",
             "tools.metadata.pdf",
         ])
-        #expect(titles(.tools, ["pdf", "jpg"]) == ["tools.merge"])
+        #expect(titles(.tools, ["pdf", "jpg"]) == ["tools.text", "tools.merge"])
+    }
+
+    @Test func imagesGetEditorAndSmartTools() {
+        #expect(titles(.tools, ["png"]) == [
+            "tools.compress", "tools.resize", "tools.crop", "tools.annotate", "tools.addbg", "tools.removebg",
+            "tools.redact", "tools.text", "tools.rotate", "tools.metadata",
+        ])
     }
 
     @Test func documentsConvertToOtherDocumentFormats() {
