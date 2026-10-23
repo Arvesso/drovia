@@ -12,7 +12,7 @@ Drag any file, hold a modifier key, and drop it onto a radial wheel:
 
 Everything runs locally — no network, no accounts.
 
-> Status: early development (phase 0 — project skeleton).
+> Status: early development — image conversion, image tools and file actions work; PDF, video and Vision tools are next.
 
 ## Requirements
 

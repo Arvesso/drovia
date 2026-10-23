@@ -3,7 +3,8 @@ import AppKit
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let folderAccess = FolderAccess()
-    private lazy var wheelCoordinator = WheelCoordinator(folderAccess: folderAccess)
+    let settings = SettingsStore()
+    private lazy var wheelCoordinator = WheelCoordinator(folderAccess: folderAccess, settings: settings)
 
     func applicationDidFinishLaunching(_: Notification) {
         wheelCoordinator.start()

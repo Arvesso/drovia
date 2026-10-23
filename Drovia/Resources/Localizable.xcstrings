@@ -1,6 +1,36 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ failed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@: ошибка"
+          }
+        }
+      }
+    },
+    "%@ images can't be larger than %lld px": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изображения %@ не могут быть больше %lld px"
+          }
+        }
+      }
+    },
+    "%@ isn't installed": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ не установлен"
+          }
+        }
+      }
+    },
     "%lld files": {
       "localizations": {
         "en": {
@@ -53,6 +83,78 @@
         }
       }
     },
+    "%lld files done": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld file done"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld files done"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Готов %lld файл"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Готово %lld файла"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Готово %lld файлов"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Готово %lld файла"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld of %lld done": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готово %lld из %lld"
+          }
+        }
+      }
+    },
+    "%lld px": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld px"
+          }
+        }
+      }
+    },
     "Actions": {
       "localizations": {
         "ru": {
@@ -63,12 +165,12 @@
         }
       }
     },
-    "Add BG": {
+    "Add": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Фон"
+            "value": "Добавить"
           }
         }
       }
@@ -113,6 +215,26 @@
         }
       }
     },
+    "AirDrop isn't available": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AirDrop недоступен"
+          }
+        }
+      }
+    },
+    "All metadata": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все метаданные"
+          }
+        }
+      }
+    },
     "Allow": {
       "localizations": {
         "ru": {
@@ -133,12 +255,62 @@
         }
       }
     },
-    "Annotate": {
+    "Already as small as it gets": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Разметка"
+            "value": "Меньше уже не сжать"
+          }
+        }
+      }
+    },
+    "Ask every time": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Спрашивать каждый раз"
+          }
+        }
+      }
+    },
+    "Can't convert these files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эти файлы нельзя конвертировать"
+          }
+        }
+      }
+    },
+    "Can't read %@ as an image": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось прочитать %@ как изображение"
+          }
+        }
+      }
+    },
+    "Can't write %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось записать %@"
+          }
+        }
+      }
+    },
+    "Choose": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать"
           }
         }
       }
@@ -153,12 +325,42 @@
         }
       }
     },
+    "Choose Folder…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать папку…"
+          }
+        }
+      }
+    },
     "Choose where Drovia works": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Выберите, где работает Drovia"
+          }
+        }
+      }
+    },
+    "Choose…": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать…"
+          }
+        }
+      }
+    },
+    "Click to show in Finder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажмите, чтобы показать в Finder"
           }
         }
       }
@@ -173,12 +375,156 @@
         }
       }
     },
+    "Compress: limit size to": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сжатие: ограничить размер"
+          }
+        }
+      }
+    },
+    "Compress: remove metadata": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сжатие: удалять метаданные"
+          }
+        }
+      }
+    },
+    "Compressing": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сжатие"
+          }
+        }
+      }
+    },
     "Convert": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Конвертация"
+          }
+        }
+      }
+    },
+    "Converting to %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конвертация в %@"
+          }
+        }
+      }
+    },
+    "Copied %lld files": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Copied %lld file"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Copied %lld files"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Скопирован %lld файл"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Скопировано %lld файла"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Скопировано %lld файлов"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Скопировано %lld файла"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Copied %lld paths": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Copied %lld path"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Copied %lld paths"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Скопирован %lld путь"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Скопировано %lld пути"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Скопировано %lld путей"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Скопировано %lld пути"
+                }
+              }
+            }
           }
         }
       }
@@ -203,6 +549,16 @@
         }
       }
     },
+    "Copy Path as": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копировать путь как"
+          }
+        }
+      }
+    },
     "Couldn't receive files": {
       "localizations": {
         "ru": {
@@ -213,12 +569,12 @@
         }
       }
     },
-    "Crop": {
+    "Drag files and hold ⇧ to convert, ⌘ for tools or ⌃ for actions.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Обрезать"
+            "value": "Перетащите файлы и зажмите ⇧ для конвертации, ⌘ для инструментов или ⌃ для действий."
           }
         }
       }
@@ -243,22 +599,52 @@
         }
       }
     },
-    "Edit": {
+    "File URL": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Правка"
+            "value": "URL файла"
           }
         }
       }
     },
-    "Float": {
+    "File name": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Полка"
+            "value": "Имя файла"
+          }
+        }
+      }
+    },
+    "File name tokens: {name}, {action}, {date}. Conversions keep the original name.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Токены имени: {name}, {action}, {date}. При конвертации имя сохраняется."
+          }
+        }
+      }
+    },
+    "Files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы"
+          }
+        }
+      }
+    },
+    "Folder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папка"
           }
         }
       }
@@ -283,6 +669,16 @@
         }
       }
     },
+    "Full path": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Полный путь"
+          }
+        }
+      }
+    },
     "General": {
       "localizations": {
         "ru": {
@@ -303,12 +699,102 @@
         }
       }
     },
+    "Hide when the modifier key is released": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрывать при отпускании клавиши-модификатора"
+          }
+        }
+      }
+    },
     "Home": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Домашняя папка"
+          }
+        }
+      }
+    },
+    "Images": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изображения"
+          }
+        }
+      }
+    },
+    "In a folder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В папку"
+          }
+        }
+      }
+    },
+    "Instantly": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сразу"
+          }
+        }
+      }
+    },
+    "Keep metadata when converting": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранять метаданные при конвертации"
+          }
+        }
+      }
+    },
+    "Large": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Большое"
+          }
+        }
+      }
+    },
+    "Location only": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Только геолокацию"
+          }
+        }
+      }
+    },
+    "Markdown link": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ссылка Markdown"
+          }
+        }
+      }
+    },
+    "Medium": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Среднее"
           }
         }
       }
@@ -323,12 +809,144 @@
         }
       }
     },
+    "Metadata: remove": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Метаданные: удалять"
+          }
+        }
+      }
+    },
     "Move": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Переместить"
+          }
+        }
+      }
+    },
+    "Move Destinations": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Папки для перемещения"
+          }
+        }
+      }
+    },
+    "Move Here": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переместить сюда"
+          }
+        }
+      }
+    },
+    "Move originals to the Trash": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перемещать оригиналы в Корзину"
+          }
+        }
+      }
+    },
+    "Move to": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переместить в"
+          }
+        }
+      }
+    },
+    "Moved %lld files": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Moved %lld file"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Moved %lld files"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Перемещён %lld файл"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Перемещено %lld файла"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Перемещено %lld файлов"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Перемещено %lld файла"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Moving": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перемещение"
+          }
+        }
+      }
+    },
+    "Next to the original": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рядом с оригиналом"
+          }
+        }
+      }
+    },
+    "No actions for these files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет действий для этих файлов"
           }
         }
       }
@@ -343,12 +961,42 @@
         }
       }
     },
+    "No tools for these files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет инструментов для этих файлов"
+          }
+        }
+      }
+    },
+    "None": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не выбрана"
+          }
+        }
+      }
+    },
     "Not granted": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Не предоставлен"
+          }
+        }
+      }
+    },
+    "Nothing to change": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нечего менять"
           }
         }
       }
@@ -363,12 +1011,72 @@
         }
       }
     },
+    "Open With": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть в"
+          }
+        }
+      }
+    },
+    "Open at login": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открывать при входе"
+          }
+        }
+      }
+    },
     "Optional. One switch instead of separate prompts, and it also covers external and network drives.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Необязательно. Один переключатель вместо отдельных запросов; также покрывает внешние и сетевые диски."
+          }
+        }
+      }
+    },
+    "Original size": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Исходный размер"
+          }
+        }
+      }
+    },
+    "Paste them in Finder": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставьте их в Finder"
+          }
+        }
+      }
+    },
+    "Path with ~": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Путь с ~"
+          }
+        }
+      }
+    },
+    "Quality": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Качество"
           }
         }
       }
@@ -383,16 +1091,6 @@
         }
       }
     },
-    "Redact": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Скрыть"
-          }
-        }
-      }
-    },
     "Remove": {
       "localizations": {
         "ru": {
@@ -403,12 +1101,162 @@
         }
       }
     },
+    "Removing metadata": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удаление метаданных"
+          }
+        }
+      }
+    },
+    "Resize": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Размер"
+          }
+        }
+      }
+    },
+    "Resize to": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Уменьшать до"
+          }
+        }
+      }
+    },
+    "Resizing": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изменение размера"
+          }
+        }
+      }
+    },
+    "Reveal": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать"
+          }
+        }
+      }
+    },
+    "Rotate": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повернуть"
+          }
+        }
+      }
+    },
+    "Rotating": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поворот"
+          }
+        }
+      }
+    },
+    "Save Here": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранить сюда"
+          }
+        }
+      }
+    },
+    "Save results": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранять результат"
+          }
+        }
+      }
+    },
+    "Saving": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранение"
+          }
+        }
+      }
+    },
     "Settings…": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Настройки…"
+          }
+        }
+      }
+    },
+    "Shell-quoted path": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Путь в кавычках"
+          }
+        }
+      }
+    },
+    "Show after": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показывать через"
+          }
+        }
+      }
+    },
+    "Shown first when you drop files on Move, followed by recent folders.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показываются первыми при перемещении, затем — недавние папки."
+          }
+        }
+      }
+    },
+    "Size": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Размер"
+          }
+        }
+      }
+    },
+    "Small": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Маленькое"
           }
         }
       }
@@ -449,6 +1297,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Версия"
+          }
+        }
+      }
+    },
+    "Wheel": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Колесо"
           }
         }
       }

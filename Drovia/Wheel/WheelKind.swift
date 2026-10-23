@@ -26,6 +26,15 @@ enum WheelKind: String, CaseIterable, Sendable {
         }
     }
 
+    /// Shown when no action of this wheel fits the dragged files.
+    var emptyMessage: String {
+        switch self {
+        case .convert: String(localized: "Can't convert these files")
+        case .tools: String(localized: "No tools for these files")
+        case .actions: String(localized: "No actions for these files")
+        }
+    }
+
     var tint: Color {
         switch self {
         case .convert: Color(red: 0.50, green: 0.53, blue: 0.95)

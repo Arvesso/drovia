@@ -12,6 +12,7 @@ struct DroviaApp: App {
         Settings {
             SettingsView()
                 .environment(appDelegate.folderAccess)
+                .environment(appDelegate.settings)
         }
     }
 }

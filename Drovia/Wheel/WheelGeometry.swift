@@ -8,8 +8,14 @@ struct WheelGeometry: Equatable, Sendable {
 
     var sectorCount: Int
     /// Radius of the central hole. Drops inside it select nothing.
-    var innerRadius: CGFloat = 64
-    var outerRadius: CGFloat = 170
+    var innerRadius: CGFloat
+    var outerRadius: CGFloat
+
+    init(sectorCount: Int, scale: CGFloat = 1) {
+        self.sectorCount = sectorCount
+        innerRadius = 64 * scale
+        outerRadius = 170 * scale
+    }
 
     var sectorAngle: Double {
         2 * .pi / Double(max(sectorCount, 1))

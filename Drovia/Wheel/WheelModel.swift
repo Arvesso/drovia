@@ -10,9 +10,10 @@ final class WheelModel {
     var isPresented = false
     var content = DragContent()
     var thumbnail: NSImage?
+    var scale: CGFloat = 1
 
     var geometry: WheelGeometry {
-        WheelGeometry(sectorCount: items.count)
+        WheelGeometry(sectorCount: items.count, scale: scale)
     }
 
     var highlightedItem: WheelItem? {

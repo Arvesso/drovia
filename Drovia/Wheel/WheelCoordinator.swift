@@ -1,7 +1,7 @@
 import AppKit
 import os
 
-/// Ties drag detection, modifier keys and the wheel panel together.
+/// Ties drag detection, modifier keys, the wheel panel and actions together.
 @MainActor
 final class WheelCoordinator {
     /// Releasing one modifier and pressing another briefly reports none; don't hide the wheel for that.
@@ -11,20 +11,24 @@ final class WheelCoordinator {
     private static let hideAnimation = Duration.milliseconds(200)
 
     private let folderAccess: FolderAccess
+    private let settings: SettingsStore
     private let dragMonitor = DragSessionMonitor()
     private let modifierWatcher = ModifierWatcher()
     private let model = WheelModel()
     private let toast = ToastPresenter()
+    private lazy var runner = ActionRunner(settings: settings, toast: toast)
     private lazy var panel = makePanel()
 
+    private var showTask: Task<Void, Never>?
     private var hideTask: Task<Void, Never>?
     private var thumbnailTask: Task<Void, Never>?
     /// Whether the current drag comes only from allowed folders.
     private var isDragAllowed = false
-    private var didWarnAboutFolder = false
+    private var didWarnThisDrag = false
 
-    init(folderAccess: FolderAccess) {
+    init(folderAccess: FolderAccess, settings: SettingsStore) {
         self.folderAccess = folderAccess
+        self.settings = settings
     }
 
     func start() {
@@ -46,9 +50,10 @@ final class WheelCoordinator {
 
     private func dragStarted(with content: DragContent) {
         isDragAllowed = folderAccess.allows(content)
-        didWarnAboutFolder = false
+        didWarnThisDrag = false
         model.content = content
         model.thumbnail = nil
+        model.scale = settings.wheelSize.scale
         thumbnailTask?.cancel()
         modifierWatcher.start()
         // Reading a file outside allowed folders could trigger a privacy prompt mid-drag.
@@ -62,38 +67,53 @@ final class WheelCoordinator {
 
     private func dragEnded() {
         modifierWatcher.stop()
+        showTask?.cancel()
         scheduleHide(after: Self.dropDeliveryGrace)
     }
 
     private func modifierChanged(to kind: WheelKind?) {
+        showTask?.cancel()
         guard let kind else {
-            scheduleHide(after: Self.modifierReleaseGrace)
+            if settings.hidesWheelOnModifierRelease {
+                scheduleHide(after: Self.modifierReleaseGrace)
+            }
             return
         }
         guard isDragAllowed else {
-            warnAboutFolderOnce()
+            warnOnce(
+                String(localized: "This folder isn't allowed"),
+                detail: String(localized: "Add it in Drovia Settings → Folders"),
+                symbol: "folder.badge.questionmark"
+            )
+            return
+        }
+        let actions = ActionRegistry.actions(for: kind, types: model.content.contentTypes)
+        guard !actions.isEmpty else {
+            warnOnce(kind.emptyMessage, detail: nil, symbol: "circle.slash")
             return
         }
         hideTask?.cancel()
-        if model.kind != kind || model.items.isEmpty {
+        let items = actions.map(\.wheelItem)
+        if model.kind != kind || model.items != items {
             model.kind = kind
-            model.items = WheelCatalog.items(for: kind)
+            model.items = items
             model.highlighted = nil
         }
-        if !model.isPresented {
+        guard !model.isPresented else { return }
+        let delay = settings.activationDelay
+        showTask = Task {
+            if delay > 0 {
+                try? await Task.sleep(for: .seconds(delay))
+                guard !Task.isCancelled else { return }
+            }
             presentWheel()
         }
     }
 
-    private func warnAboutFolderOnce() {
-        guard !didWarnAboutFolder else { return }
-        didWarnAboutFolder = true
-        toast.show(
-            String(localized: "This folder isn't allowed"),
-            subtitle: String(localized: "Add it in Drovia Settings → Folders"),
-            symbol: "folder.badge.questionmark",
-            tint: .orange
-        )
+    private func warnOnce(_ title: String, detail: String?, symbol: String) {
+        guard !didWarnThisDrag else { return }
+        didWarnThisDrag = true
+        toast.show(title, detail: detail, symbol: symbol, tint: .orange)
     }
 
     // MARK: - Wheel
@@ -135,32 +155,26 @@ final class WheelCoordinator {
     // MARK: - Drop
 
     private func handleDrop(at index: Int, pasteboard: NSPasteboard) -> Bool {
-        guard model.items.indices.contains(index) else { return false }
-        let item = model.items[index]
-        let kind = model.kind
+        guard model.items.indices.contains(index),
+              let action = ActionRegistry.action(id: model.items[index].id)
+        else { return false }
         let dropped = DroppedFiles(pasteboard: pasteboard)
 
         hideTask?.cancel()
         hideTask = Task { await hideWheel() }
 
         Task {
+            let files: [URL]
             do {
-                let urls = try await dropped.resolve()
-                Logger.wheel.info("\(kind.rawValue) → \(item.id): \(urls.map(\.lastPathComponent))")
-                toast.show(
-                    "\(kind.title) · \(item.title)",
-                    subtitle: String(localized: "\(urls.count) files"),
-                    tint: kind.tint
-                )
+                files = try await dropped.resolve()
             } catch {
                 Logger.wheel.error("Failed to receive dropped files: \(error.localizedDescription)")
-                toast.show(
-                    String(localized: "Couldn't receive files"),
-                    subtitle: error.localizedDescription,
-                    symbol: "exclamationmark.triangle.fill",
-                    tint: .orange
-                )
+                toast.showError(String(localized: "Couldn't receive files"), detail: error.localizedDescription)
+                return
             }
+            // Let the drag animation finish before menus or panels appear.
+            try? await Task.sleep(for: .milliseconds(120))
+            await runner.run(action, on: files)
         }
         return true
     }

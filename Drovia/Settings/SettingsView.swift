@@ -9,11 +9,17 @@ struct SettingsView: View {
             Tab("General", systemImage: "gearshape", value: .general) {
                 GeneralSettingsView()
             }
+            Tab("Files", systemImage: "doc.on.doc", value: .files) {
+                FilesSettingsView()
+            }
+            Tab("Actions", systemImage: "bolt", value: .actions) {
+                ActionsSettingsView()
+            }
             Tab("Folders", systemImage: "folder", value: .folders) {
                 FoldersSettingsView()
             }
         }
-        .frame(width: 520, height: 440)
+        .frame(width: 540, height: 500)
         .onAppear {
             // Until something is allowed, folders are the only setting that matters.
             if folderAccess.folders.isEmpty {
@@ -24,17 +30,7 @@ struct SettingsView: View {
 }
 
 private enum SettingsTab: Hashable {
-    case general
-    case folders
-}
-
-private struct GeneralSettingsView: View {
-    var body: some View {
-        Form {
-            LabeledContent("Version", value: Bundle.main.appVersion)
-        }
-        .formStyle(.grouped)
-    }
+    case general, files, actions, folders
 }
 
 extension Bundle {

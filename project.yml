@@ -21,12 +21,19 @@ settings:
     SWIFT_EMIT_LOC_STRINGS: YES
     DEAD_CODE_STRIPPING: YES
 
+packages:
+  libwebp:
+    url: https://github.com/SDWebImage/libwebp-Xcode
+    from: 1.5.0
+
 targets:
   Drovia:
     type: application
     platform: macOS
     sources:
       - path: Drovia
+    dependencies:
+      - package: libwebp
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.arvesso.drovia
