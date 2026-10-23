@@ -186,6 +186,18 @@ struct ActionRegistryTests {
         #expect(titles(.actions, ["txt"]).contains("actions.zip"))
     }
 
+    @Test func videosAndAudioGetMediaActions() {
+        #expect(titles(.convert, ["mp4"]) == [
+            "convert.video.mov",
+            "convert.video.gif",
+            "convert.audio.m4a",
+            "convert.audio.wav",
+            "convert.audio.aiff",
+        ])
+        #expect(titles(.tools, ["mov"]) == ["tools.compress.video", "tools.mute.video", "tools.rotate.video"])
+        #expect(titles(.convert, ["mp3"]) == ["convert.audio.m4a", "convert.audio.wav", "convert.audio.aiff"])
+    }
+
     @Test func otherFilesGetChecksum() {
         #expect(titles(.tools, ["dmg"]) == ["tools.checksum"])
         #expect(titles(.convert, ["dmg"]).isEmpty)

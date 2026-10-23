@@ -78,20 +78,35 @@ struct ActionContext {
         _ files: [URL],
         _ work: @escaping @Sendable (URL) async throws -> URL?
     ) async -> ActionResult {
+        await processEach(files, concurrency: nil) { file, _ in try await work(file) }
+    }
+
+    /// Like `processEach(_:_:)`, for long jobs that report their own progress (0...1) per file.
+    /// - Parameter concurrency: Files processed at once; defaults to one per spare CPU core.
+    func processEach(
+        _ files: [URL],
+        concurrency: Int?,
+        _ work: @escaping @Sendable (URL, _ progress: @escaping @Sendable (Double) -> Void) async throws -> URL?
+    ) async -> ActionResult {
         var result = ActionResult()
-        let limit = max(2, ProcessInfo.processInfo.activeProcessorCount - 1)
+        let limit = concurrency ?? max(2, ProcessInfo.processInfo.activeProcessorCount - 1)
+        let tracker = ProgressTracker(fileCount: files.count, report: reportProgress)
         await withTaskGroup(of: (URL, Result<URL?, any Error>).self) { group in
-            var pending = files.makeIterator()
+            var pending = files.enumerated().makeIterator()
             func addNext() {
-                guard let file = pending.next() else { return }
+                guard let (index, file) = pending.next() else { return }
                 group.addTask {
-                    do { return try await (file, .success(work(file))) } catch { return (file, .failure(error)) }
+                    let progress: @Sendable (Double) -> Void = { fraction in
+                        Task { @MainActor in tracker.update(index, fraction) }
+                    }
+                    do { return try await (file, .success(work(file, progress))) } catch {
+                        return (file, .failure(error))
+                    }
                 }
             }
             for _ in 0 ..< limit {
                 addNext()
             }
-            var finished = 0
             for await (file, outcome) in group {
                 switch outcome {
                 case let .success(output):
@@ -99,12 +114,36 @@ struct ActionContext {
                 case let .failure(error):
                     result.failures.append(ActionFailure(file: file, message: error.localizedDescription))
                 }
-                finished += 1
-                reportProgress(Double(finished) / Double(files.count))
+                tracker.finish(files.firstIndex(of: file) ?? 0)
                 addNext()
             }
         }
         return result
+    }
+}
+
+/// Combines per-file progress into one overall fraction.
+@MainActor
+private final class ProgressTracker {
+    private var fractions: [Double]
+    private let report: (Double) -> Void
+
+    init(fileCount: Int, report: @escaping (Double) -> Void) {
+        fractions = Array(repeating: 0, count: fileCount)
+        self.report = report
+    }
+
+    func update(_ index: Int, _ fraction: Double) {
+        // Late updates must not move a finished file backwards.
+        guard fractions.indices.contains(index), fractions[index] < 1 else { return }
+        fractions[index] = min(max(fraction, 0), 0.99)
+        report(fractions.reduce(0, +) / Double(fractions.count))
+    }
+
+    func finish(_ index: Int) {
+        guard fractions.indices.contains(index) else { return }
+        fractions[index] = 1
+        report(fractions.reduce(0, +) / Double(fractions.count))
     }
 }
 

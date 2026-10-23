@@ -11,6 +11,26 @@
         }
       }
     },
+    "%@ has no sound": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В %@ нет звука"
+          }
+        }
+      }
+    },
+    "%@ has no video": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В %@ нет видео"
+          }
+        }
+      }
+    },
     "%@ images can't be larger than %lld px": {
       "localizations": {
         "ru": {
@@ -357,6 +377,16 @@
         }
       }
     },
+    "Can't convert %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось сконвертировать %@"
+          }
+        }
+      }
+    },
     "Can't convert these files": {
       "localizations": {
         "ru": {
@@ -503,6 +533,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Сжать"
+          }
+        }
+      }
+    },
+    "Compress to": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сжимать в"
           }
         }
       }
@@ -861,6 +901,16 @@
         }
       }
     },
+    "GIF width": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ширина GIF"
+          }
+        }
+      }
+    },
     "General": {
       "localizations": {
         "ru": {
@@ -877,6 +927,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Предоставлен"
+          }
+        }
+      }
+    },
+    "H.264, up to 1080p": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "H.264, до 1080p"
+          }
+        }
+      }
+    },
+    "H.264, up to 720p": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "H.264, до 720p"
+          }
+        }
+      }
+    },
+    "HEVC, up to 1080p": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "HEVC, до 1080p"
           }
         }
       }
@@ -1133,6 +1213,16 @@
         }
       }
     },
+    "Mute": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Без звука"
+          }
+        }
+      }
+    },
     "Next to the original": {
       "localizations": {
         "ru": {
@@ -1339,6 +1429,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Удаление метаданных"
+          }
+        }
+      }
+    },
+    "Removing sound": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удаление звука"
           }
         }
       }
@@ -1639,6 +1739,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Версия"
+          }
+        }
+      }
+    },
+    "Video": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Видео"
           }
         }
       }

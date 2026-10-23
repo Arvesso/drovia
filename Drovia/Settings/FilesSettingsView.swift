@@ -63,6 +63,15 @@ struct FilesSettingsView: View {
                     ForEach(MetadataRemoval.allCases) { Text($0.title).tag($0) }
                 }
             }
+
+            Section("Video") {
+                Picker("Compress to", selection: $settings.videoCompression) {
+                    ForEach(VideoCompression.allCases) { Text($0.title).tag($0) }
+                }
+                Picker("GIF width", selection: $settings.gifWidth) {
+                    ForEach([320, 480, 640, 800], id: \.self) { Text("\($0) px").tag($0) }
+                }
+            }
         }
         .formStyle(.grouped)
     }

@@ -130,6 +130,17 @@ final class SettingsStore {
         didSet { defaults.set(metadataRemoval.rawValue, forKey: Keys.metadataRemoval) }
     }
 
+    // MARK: Video
+
+    var videoCompression: VideoCompression {
+        didSet { defaults.set(videoCompression.rawValue, forKey: Keys.videoCompression) }
+    }
+
+    /// Width of GIFs made from videos, in pixels.
+    var gifWidth: Int {
+        didSet { defaults.set(gifWidth, forKey: Keys.gifWidth) }
+    }
+
     // MARK: Actions
 
     var terminalApp: TerminalApp {
@@ -167,6 +178,8 @@ final class SettingsStore {
         compressRemovesMetadata = defaults.object(forKey: Keys.compressRemovesMetadata) as? Bool ?? true
         resizePreset = defaults.enumValue(forKey: Keys.resizePreset) ?? .half
         metadataRemoval = defaults.enumValue(forKey: Keys.metadataRemoval) ?? .all
+        videoCompression = defaults.enumValue(forKey: Keys.videoCompression) ?? .hevc1080
+        gifWidth = defaults.object(forKey: Keys.gifWidth) as? Int ?? 480
         terminalApp = defaults.enumValue(forKey: Keys.terminalApp) ?? .terminal
         copyPathFormat = defaults.enumValue(forKey: Keys.copyPathFormat) ?? .posix
         favoriteFolders = defaults.stringArray(forKey: Keys.favoriteFolders) ?? []
@@ -207,6 +220,8 @@ final class SettingsStore {
         static let compressRemovesMetadata = "compressRemovesMetadata"
         static let resizePreset = "resizePreset"
         static let metadataRemoval = "metadataRemoval"
+        static let videoCompression = "videoCompression"
+        static let gifWidth = "gifWidth"
         static let terminalApp = "terminalApp"
         static let copyPathFormat = "copyPathFormat"
         static let favoriteFolders = "favoriteFolders"

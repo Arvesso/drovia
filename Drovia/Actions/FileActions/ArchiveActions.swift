@@ -85,10 +85,11 @@ struct ChecksumAction: DroviaAction {
         String(localized: "Calculating")
     }
 
-    /// Images and PDFs have their own tools; checksums are for everything else.
+    /// Images, PDFs and videos have their own tools; checksums are for everything else.
     func supports(_ types: [UTType]) -> Bool {
         !types.isEmpty && types.allSatisfy {
             !$0.conforms(to: .folder) && !$0.conforms(to: .pdf) && !ImageFormat.isReadableImage($0)
+                && !MediaEngine.isVideo($0)
         }
     }
 

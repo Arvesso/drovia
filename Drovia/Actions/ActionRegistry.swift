@@ -11,10 +11,15 @@ enum ActionRegistry {
         ImageFormat.convertTargets.map(ImageConvertAction.init)
             + PDFConvertAction.Target.allCases.map(PDFConvertAction.init)
             + DocumentFormat.allCases.map(DocumentConvertAction.init)
+            + VideoConvertAction.Target.allCases.map(VideoConvertAction.init)
+            + AudioFormat.allCases.map(AudioConvertAction.init)
 
     private static let tools: [any DroviaAction] = [
         CompressAction(),
         PDFTransformAction(kind: .compress),
+        VideoToolAction(kind: .compress),
+        VideoToolAction(kind: .mute),
+        VideoToolAction(kind: .rotate),
         ResizeAction(),
         PDFMergeAction(),
         PDFSplitAction(),
