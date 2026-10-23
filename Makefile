@@ -4,7 +4,7 @@ DERIVED_DATA := build
 APP          := $(DERIVED_DATA)/Build/Products/Debug/Drovia.app
 XCODEBUILD   := xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination 'platform=macOS,arch=arm64' -derivedDataPath $(DERIVED_DATA)
 
-.PHONY: gen build run test format lint icon clean logs signing
+.PHONY: gen build run test format lint icon clean logs signing docs-images
 
 gen:
 	xcodegen generate --quiet
@@ -48,3 +48,7 @@ signing:
 	team=$$(security find-certificate -c "$$identity" -p | openssl x509 -noout -subject -nameopt multiline | awk -F' = ' '/organizationalUnitName/ {print $$2}'); \
 	printf 'CODE_SIGN_IDENTITY = Apple Development\nDEVELOPMENT_TEAM = %s\n' "$$team" > Config/Local.xcconfig; \
 	echo "Signing with $$identity (team $$team). Written to Config/Local.xcconfig"
+
+# Re-renders the README images in docs/images (in English).
+docs-images: gen
+	TEST_RUNNER_DROVIA_DOCS=1 $(XCODEBUILD) test -quiet -only-testing:DroviaTests/DocsImages -testLanguage en -testRegion US

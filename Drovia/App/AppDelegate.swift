@@ -29,6 +29,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_: Notification) {
+        // Unit tests run inside the app; they need its code, not its global monitors or windows.
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
         wheelCoordinator.start()
         // Files dragged out of the shelf can go onto the wheel too.
         shelf.onDragStart = { [weak self] in self?.wheelCoordinator.beginInternalDrag(with: $0) }
