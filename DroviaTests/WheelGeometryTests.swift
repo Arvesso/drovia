@@ -45,6 +45,7 @@ struct WheelKindTests {
         #expect(WheelKind(modifiers: .shift) == .convert)
         #expect(WheelKind(modifiers: .command) == .tools)
         #expect(WheelKind(modifiers: .control) == .actions)
+        #expect(WheelKind(modifiers: .option) == .recipes)
     }
 
     @Test func irrelevantFlagsAreIgnored() {
@@ -53,7 +54,6 @@ struct WheelKindTests {
 
     @Test func combinationsAndOptionSelectNothing() {
         #expect(WheelKind(modifiers: []) == nil)
-        #expect(WheelKind(modifiers: .option) == nil)
         #expect(WheelKind(modifiers: [.shift, .command]) == nil)
     }
 }

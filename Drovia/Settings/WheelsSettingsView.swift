@@ -7,7 +7,8 @@ struct WheelsSettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Picker("Wheel", selection: $wheel) {
-                ForEach(WheelKind.allCases, id: \.self) { kind in
+                // Recipes are arranged in their own tab.
+                ForEach(WheelKind.allCases.filter { $0 != .recipes }, id: \.self) { kind in
                     Text("\(kind.title) (\(kind.modifierSymbol))").tag(kind)
                 }
             }

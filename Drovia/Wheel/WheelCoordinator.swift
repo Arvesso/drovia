@@ -131,9 +131,18 @@ final class WheelCoordinator {
             )
             return
         }
-        let actions = ActionRegistry.actions(for: kind, types: model.content.contentTypes, layout: settings.wheelLayout)
+        let actions = ActionRegistry.actions(
+            for: kind,
+            types: model.content.contentTypes,
+            layout: settings.wheelLayout,
+            recipes: settings.recipes
+        )
         guard !actions.isEmpty else {
-            warnOnce(kind.emptyMessage, detail: nil, symbol: "circle.slash")
+            warnOnce(
+                kind.emptyMessage,
+                detail: kind == .recipes ? String(localized: "Create one in Settings → Recipes") : nil,
+                symbol: "circle.slash"
+            )
             return
         }
         hideTask?.cancel()
@@ -259,7 +268,8 @@ final class WheelCoordinator {
 
         let types = content.contentTypes
         let available = WheelKind.allCases.filter {
-            !ActionRegistry.actions(for: $0, types: types, layout: settings.wheelLayout).isEmpty
+            !ActionRegistry.actions(for: $0, types: types, layout: settings.wheelLayout, recipes: settings.recipes)
+                .isEmpty
         }
         guard let kind = available.contains(lastKeyboardKind) ? lastKeyboardKind : available.first else {
             toast.show(
@@ -298,8 +308,13 @@ final class WheelCoordinator {
     private func switchKeyboardWheel(to kind: WheelKind) {
         lastKeyboardKind = kind
         model.kind = kind
-        model.items = ActionRegistry.actions(for: kind, types: model.content.contentTypes, layout: settings.wheelLayout)
-            .map(\.wheelItem)
+        model.items = ActionRegistry.actions(
+            for: kind,
+            types: model.content.contentTypes,
+            layout: settings.wheelLayout,
+            recipes: settings.recipes
+        )
+        .map(\.wheelItem)
         model.highlighted = model.items.isEmpty ? nil : 0
     }
 
@@ -341,7 +356,10 @@ final class WheelCoordinator {
     }
 
     private func runKeyboardSelection(_ index: Int) {
-        guard model.items.indices.contains(index), let action = ActionRegistry.action(id: model.items[index].id) else {
+        guard model.items.indices.contains(index), let action = ActionRegistry.action(
+            id: model.items[index].id,
+            recipes: settings.recipes
+        ) else {
             return
         }
         let files = model.content.fileURLs
@@ -358,7 +376,7 @@ final class WheelCoordinator {
 
     private func handleDrop(at index: Int, pasteboard: NSPasteboard) -> Bool {
         guard model.items.indices.contains(index),
-              let action = ActionRegistry.action(id: model.items[index].id)
+              let action = ActionRegistry.action(id: model.items[index].id, recipes: settings.recipes)
         else { return false }
         let dropped = DroppedFiles(pasteboard: pasteboard)
 

@@ -77,10 +77,12 @@ struct DroppedFiles {
         }
     }
 
+    /// Where promised files and raw images are written; results for them go to Downloads instead.
+    nonisolated static let temporaryRoot = FileManager.default.temporaryDirectory
+        .appendingPathComponent("Dropped", isDirectory: true)
+
     private static func makeTemporaryFolder() throws -> URL {
-        let folder = FileManager.default.temporaryDirectory
-            .appendingPathComponent("Dropped", isDirectory: true)
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let folder = temporaryRoot.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         return folder
     }

@@ -23,36 +23,20 @@ final class ActionRunner {
         guard !files.isEmpty else { return }
         let tint = action.wheel.tint
 
-        guard let location = await outputLocation(for: action) else { return }
-        let planner = OutputPlanner(location: location, template: settings.fileNameTemplate)
-
         let progress = ProgressBox()
         let progressTask = Task {
             try? await Task.sleep(for: Self.progressDelay)
             guard !Task.isCancelled, !action.isInteractive else { return }
             toast.showProgress(action.progressTitle, fraction: progress.fraction, tint: tint)
         }
-        let context = ActionContext(settings: settings, planner: planner, shelf: shelf) { [toast] fraction in
-            progress.fraction = fraction
-            if toast.isShowingProgress {
-                toast.showProgress(action.progressTitle, fraction: fraction, tint: tint)
-            }
-        }
-
         do {
-            var result = try await action.perform(files, context: context)
-            progressTask.cancel()
-            Logger.wheel.info("\(action.id): \(result.outputs.count) output(s), \(result.failures.count) failure(s)")
-            if action.producesFiles {
-                result.undo += result.outputs.map(UndoStep.trashCreated)
-                if settings.trashesOriginals {
-                    result.undo += trashOriginals(of: result)
-                }
-                if settings.addsResultsToShelf, !result.outputs.isEmpty {
-                    shelf.add(result.outputs)
+            let (result, entry) = try await execute(action, on: files, allowsPrompts: true) { [toast] fraction in
+                progress.fraction = fraction
+                if toast.isShowingProgress {
+                    toast.showProgress(action.progressTitle, fraction: fraction, tint: tint)
                 }
             }
-            let entry = record(result, of: action, fileCount: files.count)
+            progressTask.cancel()
             showSummary(of: result, action: action, undoable: entry)
         } catch is CancellationError {
             progressTask.cancel()
@@ -62,6 +46,34 @@ final class ActionRunner {
             Logger.wheel.error("\(action.id) failed: \(error.localizedDescription)")
             toast.showError(String(localized: "\(action.title) failed"), detail: error.localizedDescription)
         }
+    }
+
+    /// Runs an action without any UI of its own (Shortcuts uses this): output placement, trashing
+    /// originals, the shelf and history all apply. `allowsPrompts: false` never asks for a save folder.
+    func execute(
+        _ action: any DroviaAction,
+        on files: [URL],
+        allowsPrompts: Bool,
+        progress: @escaping (Double) -> Void = { _ in }
+    ) async throws -> (ActionResult, HistoryEntry?) {
+        guard let location = await outputLocation(for: action, allowsPrompts: allowsPrompts) else {
+            throw CancellationError()
+        }
+        let planner = OutputPlanner(location: location, template: settings.fileNameTemplate)
+        let context = ActionContext(settings: settings, planner: planner, shelf: shelf, reportProgress: progress)
+
+        var result = try await action.perform(files, context: context)
+        Logger.wheel.info("\(action.id): \(result.outputs.count) output(s), \(result.failures.count) failure(s)")
+        if action.producesFiles {
+            result.undo += result.outputs.map(UndoStep.trashCreated)
+            if settings.trashesOriginals {
+                result.undo += trashOriginals(of: result)
+            }
+            if settings.addsResultsToShelf, !result.outputs.isEmpty {
+                shelf.add(result.outputs)
+            }
+        }
+        return (result, record(result, of: action, fileCount: files.count))
     }
 
     func undo(_ entry: HistoryEntry) {
@@ -80,7 +92,7 @@ final class ActionRunner {
 
     // MARK: - Private
 
-    private func outputLocation(for action: any DroviaAction) async -> OutputPlanner.Location? {
+    private func outputLocation(for action: any DroviaAction, allowsPrompts: Bool) async -> OutputPlanner.Location? {
         guard action.producesFiles else { return .nextToOriginal }
         switch settings.outputLocation {
         case .nextToOriginal:
@@ -91,6 +103,7 @@ final class ActionRunner {
             }
             return .nextToOriginal
         case .ask:
+            guard allowsPrompts else { return .nextToOriginal }
             return await FolderPanel.choose(prompt: String(localized: "Save Here")).map { .folder($0) }
         }
     }

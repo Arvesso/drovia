@@ -85,6 +85,10 @@ final class SettingsStore {
         didSet { defaults.set(try? JSONEncoder().encode(wheelLayout), forKey: Keys.wheelLayout) }
     }
 
+    var recipes: [Recipe] {
+        didSet { defaults.set(try? JSONEncoder().encode(recipes), forKey: Keys.recipes) }
+    }
+
     /// Bundle IDs of apps whose drags Drovia ignores.
     var excludedApps: [String] {
         didSet { defaults.set(excludedApps, forKey: Keys.excludedApps) }
@@ -213,6 +217,8 @@ final class SettingsStore {
         wheelLayout = defaults.data(forKey: Keys.wheelLayout)
             .flatMap { try? JSONDecoder().decode(WheelLayout.self, from: $0) } ?? WheelLayout()
         excludedApps = defaults.stringArray(forKey: Keys.excludedApps) ?? []
+        recipes = defaults.data(forKey: Keys.recipes)
+            .flatMap { try? JSONDecoder().decode([Recipe].self, from: $0) } ?? Recipe.examples
         outputLocation = defaults.enumValue(forKey: Keys.outputLocation) ?? .nextToOriginal
         outputFolderPath = defaults.string(forKey: Keys.outputFolderPath)
         fileNameTemplate = defaults.string(forKey: Keys.fileNameTemplate) ?? NamingTemplate.defaultTemplate
@@ -262,6 +268,7 @@ final class SettingsStore {
         static let hidesWheelOnModifierRelease = "hidesWheelOnModifierRelease"
         static let wheelLayout = "wheelLayout"
         static let excludedApps = "excludedApps"
+        static let recipes = "recipes"
         static let outputLocation = "outputLocation"
         static let outputFolderPath = "outputFolderPath"
         static let fileNameTemplate = "fileNameTemplate"

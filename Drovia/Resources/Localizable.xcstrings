@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@"
+          }
+        }
+      }
+    },
     "%@ %@": {
       "localizations": {
         "ru": {
@@ -287,6 +297,16 @@
         }
       }
     },
+    "Action": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Действие"
+          }
+        }
+      }
+    },
     "Actions": {
       "localizations": {
         "ru": {
@@ -347,6 +367,26 @@
         }
       }
     },
+    "Add Recipe": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить рецепт"
+          }
+        }
+      }
+    },
+    "Add Step": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавить шаг"
+          }
+        }
+      }
+    },
     "Add it in Drovia Settings → Folders": {
       "localizations": {
         "ru": {
@@ -363,6 +403,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Добавлять результаты на полку"
+          }
+        }
+      }
+    },
+    "Add steps; each one works on the files the previous step made.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добавьте шаги — каждый работает с файлами, которые сделал предыдущий."
           }
         }
       }
@@ -981,6 +1031,16 @@
         }
       }
     },
+    "Create one in Settings → Recipes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создайте его в Настройках → Рецепты"
+          }
+        }
+      }
+    },
     "Crop": {
       "localizations": {
         "ru": {
@@ -1051,6 +1111,26 @@
         }
       }
     },
+    "Drovia Action": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Действие Drovia"
+          }
+        }
+      }
+    },
+    "Drovia Recipe": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рецепт Drovia"
+          }
+        }
+      }
+    },
     "Drovia can't see Finder's selection": {
       "localizations": {
         "ru": {
@@ -1067,6 +1147,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Drovia не разрешено управлять Finder"
+          }
+        }
+      }
+    },
+    "Drovia isn't ready yet. Try again.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia ещё запускается. Попробуйте снова."
           }
         }
       }
@@ -1191,6 +1281,16 @@
         }
       }
     },
+    "For the Web": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для сайта"
+          }
+        }
+      }
+    },
     "Free": {
       "localizations": {
         "ru": {
@@ -1307,6 +1407,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Домашняя папка"
+          }
+        }
+      }
+    },
+    "Icon": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Иконка"
           }
         }
       }
@@ -1603,12 +1713,42 @@
         }
       }
     },
+    "Name": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Название"
+          }
+        }
+      }
+    },
+    "New Recipe": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Новый рецепт"
+          }
+        }
+      }
+    },
     "Next to the original": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Рядом с оригиналом"
+          }
+        }
+      }
+    },
+    "No Recipe Selected": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рецепт не выбран"
           }
         }
       }
@@ -1623,12 +1763,42 @@
         }
       }
     },
+    "No file type fits every step yet.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пока ни один тип файлов не подходит ко всем шагам."
+          }
+        }
+      }
+    },
     "No folders allowed yet": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Нет разрешённых папок"
+          }
+        }
+      }
+    },
+    "No recipes for these files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет рецептов для этих файлов"
+          }
+        }
+      }
+    },
+    "No shortcuts found": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Быстрые команды не найдены"
           }
         }
       }
@@ -1823,6 +1993,16 @@
         }
       }
     },
+    "Process Files with Drovia": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обработать файлы в Drovia"
+          }
+        }
+      }
+    },
     "Quality": {
       "localizations": {
         "ru": {
@@ -1849,6 +2029,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Недавние"
+          }
+        }
+      }
+    },
+    "Recipe": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рецепт"
+          }
+        }
+      }
+    },
+    "Recipes": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рецепты"
+          }
+        }
+      }
+    },
+    "Recipes chain actions together. Drag files and hold ⌥ to run one.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Рецепты объединяют действия в цепочку. Перетащите файлы и зажмите ⌥, чтобы запустить."
           }
         }
       }
@@ -1973,6 +2183,16 @@
         }
       }
     },
+    "Remove Recipe": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить рецепт"
+          }
+        }
+      }
+    },
     "Remove from Shelf": {
       "localizations": {
         "ru": {
@@ -2093,6 +2313,66 @@
         }
       }
     },
+    "Run %@ on %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запустить %@ для %@"
+          }
+        }
+      }
+    },
+    "Run Drovia Recipe": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запустить рецепт Drovia"
+          }
+        }
+      }
+    },
+    "Run Shell Script": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell-скрипт"
+          }
+        }
+      }
+    },
+    "Run Shortcut": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Быстрая команда"
+          }
+        }
+      }
+    },
+    "Runs a Drovia action, like Compress or Convert to WebP, and returns the new files.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запускает действие Drovia, например «Сжать» или «Конвертировать в WebP», и возвращает новые файлы."
+          }
+        }
+      }
+    },
+    "Runs one of your Drovia recipes and returns the new files.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запускает ваш рецепт Drovia и возвращает новые файлы."
+          }
+        }
+      }
+    },
     "S": {
       "localizations": {
         "ru": {
@@ -2203,6 +2483,16 @@
         }
       }
     },
+    "Share Light": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лёгкая отправка"
+          }
+        }
+      }
+    },
     "Shelf": {
       "localizations": {
         "ru": {
@@ -2213,12 +2503,32 @@
         }
       }
     },
+    "Shell Script": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shell-скрипт"
+          }
+        }
+      }
+    },
     "Shell-quoted path": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
             "value": "Путь в кавычках"
+          }
+        }
+      }
+    },
+    "Shortcut": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Быстрая команда"
           }
         }
       }
@@ -2343,6 +2653,16 @@
         }
       }
     },
+    "Steps": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Шаги"
+          }
+        }
+      }
+    },
     "Tab — next wheel  ·  ← → — choose  ·  ↩ or 1–9 — run  ·  Esc — close": {
       "localizations": {
         "ru": {
@@ -2389,6 +2709,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Эта папка не разрешена"
+          }
+        }
+      }
+    },
+    "This recipe has no steps": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В этом рецепте нет шагов"
           }
         }
       }
@@ -2513,6 +2843,16 @@
         }
       }
     },
+    "Works with: %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Подходит для: %@"
+          }
+        }
+      }
+    },
     "Zip": {
       "localizations": {
         "ru": {
@@ -2529,6 +2869,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Архивация"
+          }
+        }
+      }
+    },
+    "“%@” can't handle these files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» не подходит для этих файлов"
           }
         }
       }

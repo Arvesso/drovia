@@ -6,14 +6,16 @@ enum WheelKind: String, CaseIterable, Sendable {
     case convert
     case tools
     case actions
+    case recipes
 
-    /// The wheel for exactly one held modifier: ⇧ Convert, ⌘ Tools, ⌃ Actions.
-    /// Combinations (and ⌥, reserved for recipes) select nothing.
+    /// The wheel for exactly one held modifier: ⇧ Convert, ⌘ Tools, ⌃ Actions, ⌥ Recipes.
+    /// Combinations select nothing.
     init?(modifiers: NSEvent.ModifierFlags) {
         switch modifiers.intersection([.shift, .command, .control, .option]) {
         case .shift: self = .convert
         case .command: self = .tools
         case .control: self = .actions
+        case .option: self = .recipes
         default: return nil
         }
     }
@@ -23,6 +25,7 @@ enum WheelKind: String, CaseIterable, Sendable {
         case .convert: String(localized: "Convert")
         case .tools: String(localized: "Tools")
         case .actions: String(localized: "Actions")
+        case .recipes: String(localized: "Recipes")
         }
     }
 
@@ -31,6 +34,7 @@ enum WheelKind: String, CaseIterable, Sendable {
         case .convert: "⇧"
         case .tools: "⌘"
         case .actions: "⌃"
+        case .recipes: "⌥"
         }
     }
 
@@ -40,6 +44,7 @@ enum WheelKind: String, CaseIterable, Sendable {
         case .convert: String(localized: "Can't convert these files")
         case .tools: String(localized: "No tools for these files")
         case .actions: String(localized: "No actions for these files")
+        case .recipes: String(localized: "No recipes for these files")
         }
     }
 
@@ -48,6 +53,7 @@ enum WheelKind: String, CaseIterable, Sendable {
         case .convert: Color(red: 0.50, green: 0.53, blue: 0.95)
         case .tools: Color(red: 0.16, green: 0.67, blue: 0.62)
         case .actions: Color(red: 0.94, green: 0.48, blue: 0.20)
+        case .recipes: Color(red: 0.85, green: 0.36, blue: 0.62)
         }
     }
 }

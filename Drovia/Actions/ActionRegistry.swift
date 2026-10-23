@@ -98,16 +98,20 @@ enum ActionRegistry {
     static func actions(
         for wheel: WheelKind,
         types: [UTType],
-        layout: WheelLayout = WheelLayout()
+        layout: WheelLayout = WheelLayout(),
+        recipes: [Recipe] = []
     ) -> [any DroviaAction] {
+        if wheel == .recipes {
+            return recipes.map(RecipeAction.init).filter { $0.supports(types) }
+        }
         let order = sectorOrder(for: wheel, layout: layout)
         return all
             .filter { $0.wheel == wheel && !layout.hidden.contains($0.sectorID) && $0.supports(types) }
             .sorted { (order[$0.sectorID] ?? .max) < (order[$1.sectorID] ?? .max) }
     }
 
-    static func action(id: String) -> (any DroviaAction)? {
-        all.first { $0.id == id }
+    static func action(id: String, recipes: [Recipe] = []) -> (any DroviaAction)? {
+        all.first { $0.id == id } ?? recipes.map(RecipeAction.init).first { $0.id == id }
     }
 
     /// Every sector of a wheel in the user's order, for the wheel editor.

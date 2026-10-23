@@ -3,6 +3,9 @@ import KeyboardShortcuts
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// For App Intents, which run inside the app but outside the SwiftUI scene.
+    private(set) weak static var current: AppDelegate?
+
     let folderAccess = FolderAccess()
     let settings = SettingsStore()
     let history = HistoryStore()
@@ -12,6 +15,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var wheelCoordinator = WheelCoordinator(
         folderAccess: folderAccess, settings: settings, runner: runner, toast: toast
     )
+
+    override init() {
+        super.init()
+        Self.current = self
+    }
 
     func applicationDidFinishLaunching(_: Notification) {
         wheelCoordinator.start()

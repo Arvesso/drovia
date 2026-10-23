@@ -7,13 +7,17 @@ actor OutputPlanner {
         case folder(URL)
     }
 
-    private let location: Location
-    private let template: String
+    let location: Location
+    let template: String
+    /// Intermediate files (from earlier recipe steps) mapped to the original each came from,
+    /// so results land next to the original rather than in a temporary folder.
+    private let originals: [URL: URL]
     private var reserved: Set<String> = []
 
-    init(location: Location, template: String) {
+    init(location: Location, template: String, originals: [URL: URL] = [:]) {
         self.location = location
         self.template = template
+        self.originals = originals
     }
 
     /// Destination for the result of processing `source`.
@@ -32,12 +36,13 @@ actor OutputPlanner {
     }
 
     private func folder(for source: URL) -> URL {
+        let source = originals[source] ?? source
         switch location {
         case let .folder(url):
             return url
         case .nextToOriginal:
             // Files dropped from Safari, Mail etc. live in our temporary folder; put results in Downloads.
-            if source.path.hasPrefix(FileManager.default.temporaryDirectory.path) {
+            if source.path.hasPrefix(DroppedFiles.temporaryRoot.path) {
                 return FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
             }
             return source.deletingLastPathComponent()

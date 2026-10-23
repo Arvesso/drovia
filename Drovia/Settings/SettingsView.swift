@@ -12,6 +12,9 @@ struct SettingsView: View {
             Tab("Wheels", systemImage: "circle.dashed", value: .wheels) {
                 WheelsSettingsView()
             }
+            Tab("Recipes", systemImage: "wand.and.stars", value: .recipes) {
+                RecipesSettingsView()
+            }
             Tab("Files", systemImage: "doc.on.doc", value: .files) {
                 FilesSettingsView()
             }
@@ -22,7 +25,7 @@ struct SettingsView: View {
                 FoldersSettingsView()
             }
         }
-        .frame(width: 540, height: 500)
+        .frame(width: 620, height: 520)
         .onAppear {
             // Until something is allowed, folders are the only setting that matters.
             if folderAccess.folders.isEmpty {
@@ -33,7 +36,7 @@ struct SettingsView: View {
 }
 
 private enum SettingsTab: Hashable {
-    case general, wheels, files, actions, folders
+    case general, wheels, recipes, files, actions, folders
 }
 
 extension Bundle {
