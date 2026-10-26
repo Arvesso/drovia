@@ -81,6 +81,16 @@
         }
       }
     },
+    "%@ isn't in a folder Drovia is allowed to use. Add it in Drovia Settings → Folders.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ находится не в той папке, с которой Drovia разрешено работать. Добавьте её в настройках Drovia → Папки."
+          }
+        }
+      }
+    },
     "%@ isn't installed": {
       "localizations": {
         "ru": {
@@ -1247,6 +1257,16 @@
         }
       }
     },
+    "Couldn't finish “%@”": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось выполнить «%@»"
+          }
+        }
+      }
+    },
     "Couldn't read Finder's selection": {
       "localizations": {
         "ru": {
@@ -1973,6 +1993,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Переместить в"
+          }
+        }
+      }
+    },
+    "Move “%@” after the steps that make files": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переместите «%@» после шагов, которые создают файлы"
           }
         }
       }
@@ -3395,6 +3425,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "«%@» не подходит для этих файлов"
+          }
+        }
+      }
+    },
+    "“%@” opens the editor or asks something, so it can't run from Shortcuts": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "«%@» открывает редактор или задаёт вопрос, поэтому не может работать из Быстрых команд"
           }
         }
       }

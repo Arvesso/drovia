@@ -16,12 +16,20 @@ enum Subprocess {
 
     /// Runs `tool` to completion. Both pipes are drained while it runs: a tool that fills a pipe
     /// (about 64 KB) would otherwise block forever. Cancelling the calling task terminates the tool.
-    static func run(_ tool: String, _ arguments: [String], directory: URL? = nil) async throws -> Output {
+    static func run(
+        _ tool: String,
+        _ arguments: [String],
+        directory: URL? = nil,
+        environment: [String: String]? = nil
+    ) async throws -> Output {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: tool)
         process.arguments = arguments
         if let directory {
             process.currentDirectoryURL = directory
+        }
+        if let environment {
+            process.environment = environment
         }
         let output = Pipe()
         let errors = Pipe()

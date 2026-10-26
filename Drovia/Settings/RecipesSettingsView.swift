@@ -87,13 +87,20 @@ private struct RecipeEditor: View {
             } header: {
                 Text("Steps")
             } footer: {
+                let action = RecipeAction(recipe: recipe)
                 let kinds = FileKind.allCases.filter { kind in
-                    kind.sampleTypes.contains { RecipeAction(recipe: recipe).supports([$0]) }
+                    kind.sampleTypes.contains { action.supports([$0]) }
                 }
-                Text(kinds.isEmpty
-                    ? String(localized: "No file type fits every step yet.")
-                    : String(localized: "Works with: \(kinds.map(\.title).formatted(.list(type: .and)))"))
-                    .foregroundStyle(.secondary)
+                if let step = action.stepBeforeResults {
+                    // Says why the recipe doesn't show up on the wheel.
+                    Text(RecipeError.stepBeforeResults(step.title).localizedDescription)
+                        .foregroundStyle(.orange)
+                } else {
+                    Text(kinds.isEmpty
+                        ? String(localized: "No file type fits every step yet.")
+                        : String(localized: "Works with: \(kinds.map(\.title).formatted(.list(type: .and)))"))
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .formStyle(.grouped)
