@@ -154,6 +154,66 @@ struct ImageEngineTests {
         #expect(CGImagePropertyOrientation.up.rotatedClockwise == .right)
     }
 
+    /// The displayed image for `orientation.rotatedClockwise` is the one for `orientation`, turned clockwise.
+    @Test(arguments: (1 ... 8).compactMap { CGImagePropertyOrientation(rawValue: UInt32($0)) })
+    func rotatedOrientationTurnsDisplayedImageClockwise(_ orientation: CGImagePropertyOrientation) throws {
+        let shown = try displayedGrid(orientation)
+        // Turning clockwise: the new first row is the old first column, read bottom to top.
+        let turned = shown[0].indices.map { column in shown.indices.reversed().map { shown[$0][column] } }
+        #expect(try displayedGrid(orientation.rotatedClockwise) == turned)
+    }
+
+    /// Red values of a 3×2 grid of 20 px blocks, each a distinct shade, as shown with `orientation` applied.
+    private func displayedGrid(_ orientation: CGImagePropertyOrientation) throws -> [[UInt8]] {
+        let block = 20, columns = 3, rows = 2
+        let context = try #require(CGContext(
+            data: nil, width: columns * block, height: rows * block, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ))
+        for row in 0 ..< rows {
+            for column in 0 ..< columns {
+                context.setFillColor(
+                    red: CGFloat(40 + (row * columns + column) * 30) / 255,
+                    green: 0,
+                    blue: 0,
+                    alpha: 1
+                )
+                // Context y points up; row 0 is the top.
+                context.fill(CGRect(x: column * block, y: (rows - 1 - row) * block, width: block, height: block))
+            }
+        }
+        let image = try #require(context.makeImage())
+        let data = NSMutableData()
+        let destination = try #require(CGImageDestinationCreateWithData(
+            data,
+            UTType.tiff.identifier as CFString,
+            1,
+            nil
+        ))
+        CGImageDestinationAddImage(
+            destination,
+            image,
+            [kCGImagePropertyOrientation: orientation.rawValue] as CFDictionary
+        )
+        #expect(CGImageDestinationFinalize(destination))
+        let source = try #require(CGImageSourceCreateWithData(data, nil))
+        let shown = try #require(CGImageSourceCreateThumbnailAtIndex(source, 0, [
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceThumbnailMaxPixelSize: columns * block,
+        ] as CFDictionary))
+        // Sample block centers, which interpolation at block edges can't touch.
+        return try (0 ..< shown.height / block).map { row in
+            try (0 ..< shown.width / block).map { column in
+                try pixel(shown, x: column * block + block / 2, y: row * block + block / 2).red
+            }
+        }
+    }
+
+    @Test func heifFilesAreWrittenAsHEIC() throws {
+        #expect(try ImageFormat(type: #require(UTType(filenameExtension: "heif"))) == .heic)
+    }
+
     /// RGBA of a pixel, with y measured from the top.
     private func pixel(_ image: CGImage, x: Int, y: Int) throws -> (red: UInt8, blue: UInt8) {
         var data = [UInt8](repeating: 0, count: 4)

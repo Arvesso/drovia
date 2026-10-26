@@ -101,6 +101,11 @@ enum EditorRenderer {
         }
 
         context.saveGState()
+        if let background, background.shadow > 0 {
+            // Cast by the drawn content, so transparent parts of an image (a logo, a cutout) cast none.
+            setShadow(background, content: content, outputScale: outputScale, in: context)
+        }
+        context.beginTransparencyLayer(auxiliaryInfo: nil)
         if let background, background.cornerRadius > 0 {
             let radius = background.cornerRadius * min(crop.width, crop.height)
             context.addPath(CGPath(roundedRect: content, cornerWidth: radius, cornerHeight: radius, transform: nil))
@@ -114,6 +119,7 @@ enum EditorRenderer {
             annotations, source: source, sourceScale: CGFloat(source.width) / imageSize.width,
             redaction: redaction, in: context
         )
+        context.endTransparencyLayer()
         context.restoreGState()
 
         return try context.makeImage().orThrow(ImageEngineError.cannotWrite(.png))
@@ -161,20 +167,17 @@ enum EditorRenderer {
                 options: []
             )
         }
+    }
 
-        guard style.shadow > 0 else { return }
+    private static func setShadow(
+        _ style: BackgroundStyle, content: CGRect, outputScale: CGFloat, in context: CGContext
+    ) {
         // Shadow offsets ignore the transform, so they're in output pixels with y pointing up.
         let size = max(content.width, content.height) * outputScale
-        context.saveGState()
         context.setShadow(
             offset: CGSize(width: 0, height: -size * 0.012 * style.shadow),
             blur: size * 0.04 * style.shadow,
             color: CGColor(gray: 0, alpha: 0.45 * style.shadow)
         )
-        let radius = style.cornerRadius * min(content.width, content.height)
-        context.addPath(CGPath(roundedRect: content, cornerWidth: radius, cornerHeight: radius, transform: nil))
-        context.setFillColor(CGColor(gray: 0, alpha: 1))
-        context.fillPath()
-        context.restoreGState()
     }
 }

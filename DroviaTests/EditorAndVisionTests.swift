@@ -129,6 +129,23 @@ struct EditorRendererTests {
     }
 }
 
+extension EditorRendererTests {
+    @Test func transparentImageShowsBackgroundNotShadowFill() throws {
+        let clear = try #require(CGContext(
+            data: nil, width: 200, height: 100, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        )?.makeImage())
+        let size = CGSize(width: 200, height: 100)
+        let output = try EditorRenderer.render(
+            source: clear, imageSize: size, crop: CGRect(origin: .zero, size: size), annotations: [],
+            background: BackgroundStyle(), redaction: .blackBox
+        )
+        // The middle of the (fully transparent) image shows the light gradient, not a black silhouette.
+        let middle = try TestImages.pixel(output, x: output.width / 2, y: output.height / 2)
+        #expect(Int(middle.red) + Int(middle.green) + Int(middle.blue) > 300)
+    }
+}
+
 struct VisionEngineTests {
     @Test func findsSensitiveText() {
         let text = "Mail me at anna@example.com or call +1 415 555 0132, card 4111 1111 1111 1111"

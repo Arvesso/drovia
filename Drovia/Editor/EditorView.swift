@@ -51,8 +51,10 @@ struct EditorView: View {
 
             Button("Cancel") { model.finish() }
                 .keyboardShortcut(.cancelAction)
+                .disabled(model.isSaving)
             if model.hasMoreFiles {
                 Button("Skip") { model.skip() }
+                    .disabled(model.isSaving)
                 if model.mode == .background {
                     Button("Apply to All") { Task { await model.saveAllWithBackground() } }
                         .help("Save this image, then add the same background to the rest")

@@ -123,7 +123,9 @@ struct CropCanvas: View {
         if let corner = handles.first(where: { hypot($0.1.x - point.x, $0.1.y - point.y) < reach }) {
             return corner.0
         }
-        return crop.contains(point) ? .move : .new
+        // A crop covering the whole image can't move, so dragging inside it draws a new one.
+        let isWholeImage = model.crop.size == model.imageSize
+        return crop.contains(point) && !isWholeImage ? .move : .new
     }
 }
 

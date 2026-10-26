@@ -174,9 +174,10 @@ final class EditorModel {
         index + 1 < files.count
     }
 
-    /// Scale of image pixels so strokes look alike on small and huge images.
+    /// Scale of image pixels so strokes look alike on small and huge images. Follows the crop, which is
+    /// what ends up in the result: a small crop of a huge photo gets normal-sized strokes.
     private var pixelScale: CGFloat {
-        max(1, max(imageSize.width, imageSize.height) / 1400)
+        max(1, max(crop.width, crop.height) / 1400)
     }
 
     // MARK: - Undo
@@ -358,46 +359,58 @@ final class EditorModel {
 
     /// Saves the current image and moves on to the next one, or finishes.
     func save() async {
-        guard let image, !isSaving else { return }
-        isSaving = true
-        defer { isSaving = false }
-        commitText()
-        do {
-            try await results.append(EditedImage(source: source, image: render(source: image, outputScale: 1)))
-        } catch {
-            loadError = error.localizedDescription
-            return
-        }
+        guard await saveCurrent() else { return }
         advance()
     }
 
     /// Applies the current background (and nothing else) to every remaining image.
     func saveAllWithBackground() async {
-        guard !isSaving else { return }
-        await save()
+        guard !isSaving, await saveCurrent() else { return }
         isSaving = true
         defer { isSaving = false }
-        let style = background
+        let style = usesBackground ? background : nil
         let redaction = redaction
+        index += 1
         while index < files.count {
             let file = files[index]
-            if let edited = try? await Task.detached(priority: .userInitiated, operation: { () throws -> CGImage in
-                let image = try ImageEngine.loadImage(file)
-                let size = CGSize(width: image.width, height: image.height)
-                return try EditorRenderer.render(
-                    source: image,
-                    imageSize: size,
-                    crop: CGRect(origin: .zero, size: size),
-                    annotations: [],
-                    background: style,
-                    redaction: redaction
-                )
-            }).value {
+            do {
+                let edited = try await Task.detached(priority: .userInitiated) { () throws -> CGImage in
+                    let image = try ImageEngine.loadImage(file)
+                    let size = CGSize(width: image.width, height: image.height)
+                    return try EditorRenderer.render(
+                        source: image,
+                        imageSize: size,
+                        crop: CGRect(origin: .zero, size: size),
+                        annotations: [],
+                        background: style,
+                        redaction: redaction
+                    )
+                }.value
                 results.append(EditedImage(source: file, image: edited))
+            } catch {
+                // Stop at the file that failed and show it, rather than leaving it out without a word.
+                load()
+                loadError = error.localizedDescription
+                return
             }
             index += 1
         }
         finish()
+    }
+
+    /// Renders the current image into the results. On failure the error is shown and nothing is kept.
+    private func saveCurrent() async -> Bool {
+        guard let image, !isSaving else { return false }
+        isSaving = true
+        defer { isSaving = false }
+        commitText()
+        do {
+            try await results.append(EditedImage(source: source, image: render(source: image, outputScale: 1)))
+            return true
+        } catch {
+            loadError = error.localizedDescription
+            return false
+        }
     }
 
     func skip() {
