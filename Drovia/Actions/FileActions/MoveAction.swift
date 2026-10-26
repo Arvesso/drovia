@@ -5,6 +5,8 @@ struct MoveAction: DroviaAction {
     let id = "actions.move"
     let wheel = WheelKind.actions
     let symbol: String? = "folder"
+    /// Asks where to with a menu.
+    let needsUser = true
 
     var title: String {
         String(localized: "Move")

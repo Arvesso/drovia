@@ -18,6 +18,9 @@ protocol DroviaAction {
     var producesFiles: Bool { get }
     /// Waits for the user (an editor window), so no progress is shown meanwhile.
     var isInteractive: Bool { get }
+    /// Shows something the user must answer (an editor, a menu, the AirDrop sheet), so it can't run
+    /// unattended from Shortcuts.
+    var needsUser: Bool { get }
 
     func supports(_ types: [UTType]) -> Bool
     func perform(_ files: [URL], context: ActionContext) async throws -> ActionResult
@@ -42,6 +45,10 @@ extension DroviaAction {
 
     var isInteractive: Bool {
         false
+    }
+
+    var needsUser: Bool {
+        isInteractive
     }
 
     var wheelItem: WheelItem {
@@ -114,7 +121,9 @@ struct ActionContext {
         var result = ActionResult()
         let limit = concurrency ?? Self.defaultConcurrency
         let tracker = ProgressTracker(fileCount: files.count, report: reportProgress)
-        await withTaskGroup(of: (URL, Result<URL?, any Error>).self) { group in
+        // Results are put back in input order: a recipe step after this one (Merge) relies on it.
+        var outcomes = [Result<URL?, any Error>?](repeating: nil, count: files.count)
+        await withTaskGroup(of: (Int, Result<URL?, any Error>).self) { group in
             var pending = files.enumerated().makeIterator()
             func addNext() {
                 guard let (index, file) = pending.next() else { return }
@@ -122,23 +131,28 @@ struct ActionContext {
                     let progress: @Sendable (Double) -> Void = { fraction in
                         Task { @MainActor in tracker.update(index, fraction) }
                     }
-                    do { return try await (file, .success(work(file, progress))) } catch {
-                        return (file, .failure(error))
+                    do { return try await (index, .success(work(file, progress))) } catch {
+                        return (index, .failure(error))
                     }
                 }
             }
             for _ in 0 ..< limit {
                 addNext()
             }
-            for await (file, outcome) in group {
-                switch outcome {
-                case let .success(output):
-                    result.processed.append(ProcessedFile(source: file, output: output))
-                case let .failure(error):
-                    result.failures.append(ActionFailure(file: file, message: error.localizedDescription))
-                }
-                tracker.finish(files.firstIndex(of: file) ?? 0)
+            for await (index, outcome) in group {
+                outcomes[index] = outcome
+                tracker.finish(index)
                 addNext()
+            }
+        }
+        for (file, outcome) in zip(files, outcomes) {
+            switch outcome {
+            case let .success(output):
+                result.processed.append(ProcessedFile(source: file, output: output))
+            case let .failure(error):
+                result.failures.append(ActionFailure(file: file, message: error.localizedDescription))
+            case nil:
+                break
             }
         }
         return result
@@ -182,5 +196,15 @@ extension DragContent {
             return promisedTypes
         }
         return Array(repeating: hasImageData ? .png : .data, count: itemCount)
+    }
+}
+
+enum FileType {
+    /// The type actions see for a file, as during a drag: folders (packages too) are `.folder`, the rest
+    /// go by extension. Unlike a drag, this may look at the disk, since URLs made by earlier recipe steps
+    /// or given by Shortcuts don't always end in a slash.
+    static func of(_ url: URL) -> UTType {
+        let isFolder = url.hasDirectoryPath || (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
+        return isFolder ? .folder : UTType(filenameExtension: url.pathExtension) ?? .data
     }
 }

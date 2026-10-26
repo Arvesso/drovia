@@ -81,6 +81,62 @@ struct RecipeTests {
         #expect(result.failures.isEmpty)
     }
 
+    @Test func supportsKnowsStepsThatMakeArchivesOrFolders() {
+        func supports(_ steps: [String], _ type: UTType) -> Bool {
+            RecipeAction(recipe: Recipe(name: "x", symbol: "star", steps: steps.map { .action(sectorID: $0) }))
+                .supports([type])
+        }
+        // A zip isn't an image, and a multi-page PDF becomes a folder of images.
+        #expect(!supports(["actions.zip", "tools.resize"], .png))
+        #expect(!supports(["convert.png", "tools.resize"], .pdf))
+        #expect(supports(["convert.png", "tools.resize"], .jpeg))
+        #expect(supports(["actions.zip", "actions.copy"], .png))
+    }
+
+    @Test func refusesStepsThatWouldGetIntermediateFiles() async throws {
+        let recipe = Recipe(name: "Backwards", symbol: "star", steps: [
+            .action(sectorID: "actions.copy"), .action(sectorID: "tools.resize"),
+        ])
+        let action = RecipeAction(recipe: recipe)
+        #expect(action.stepBeforeResults != nil)
+        #expect(!action.supports([.png]))
+        await #expect(throws: RecipeError.self) { _ = try await action.perform([png()], context: context()) }
+    }
+
+    @Test func keepsResultsWhenALaterStepFails() async throws {
+        let recipe = Recipe(name: "Then fail", symbol: "star", steps: [
+            .action(sectorID: "tools.resize"), .script("exit 3"),
+        ])
+        let result = try await RecipeAction(recipe: recipe).perform([png()], context: context())
+        let output = try #require(result.outputs.first)
+        #expect(FileManager.default.fileExists(atPath: output.path))
+        #expect(result.message != nil)
+    }
+
+    @Test func scriptsFindHomebrewTools() async throws {
+        let marker = folder.url.appendingPathComponent("path.txt")
+        let recipe = Recipe(name: "Path", symbol: "terminal", steps: [.script("echo \"$PATH\" > '\(marker.path)'")])
+        _ = try await RecipeAction(recipe: recipe).perform([png()], context: context())
+        #expect(try String(contentsOf: marker, encoding: .utf8).contains("/opt/homebrew/bin"))
+    }
+
+    @Test func processEachKeepsInputOrder() async throws {
+        let files = try (1 ... 6).map { try png("p\($0).png") }
+        // Later files finish first.
+        let result = await context().processEach(files, concurrency: 6) { file, _ in
+            let number = Int(file.deletingPathExtension().lastPathComponent.dropFirst()) ?? 0
+            try await Task.sleep(for: .milliseconds(20 * (7 - number)))
+            return file
+        }
+        #expect(result.outputs == files)
+    }
+
+    @Test func foldersAreFolderTyped() throws {
+        #expect(FileType.of(folder.url) == .folder)
+        #expect(FileType.of(URL(fileURLWithPath: folder.url.path)) == .folder)
+        #expect(try FileType.of(png()) == .png)
+    }
+
     @Test func supportsFollowsTypeChanges() {
         let recipe = Recipe(
             name: "x",

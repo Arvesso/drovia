@@ -15,7 +15,8 @@ enum RecipeScripts {
             try await execute(
                 "/bin/zsh",
                 ["-c", source, "drovia"] + files.map(\.path),
-                directory: files.first?.deletingLastPathComponent()
+                directory: files.first?.deletingLastPathComponent(),
+                environment: scriptEnvironment
             )
         case .action:
             break
@@ -28,9 +29,25 @@ enum RecipeScripts {
             .split(separator: "\n").map(String.init).filter { !$0.isEmpty }.sorted() ?? []
     }
 
+    /// Apps launched from Finder get only the system PATH, so Homebrew tools (ffmpeg, magick, cwebp) that
+    /// work in Terminal weren't found. Their usual folders come first, as `brew shellenv` sets them up.
+    static var scriptEnvironment: [String: String] {
+        var environment = ProcessInfo.processInfo.environment
+        let path = environment["PATH"] ?? "/usr/bin:/bin:/usr/sbin:/sbin"
+        let extra = ["/opt/homebrew/bin", "/opt/homebrew/sbin", "/usr/local/bin"]
+            .filter { !path.split(separator: ":").contains(Substring($0)) }
+        environment["PATH"] = (extra + [path]).joined(separator: ":")
+        return environment
+    }
+
     @discardableResult
-    private static func execute(_ tool: String, _ arguments: [String], directory: URL? = nil) async throws -> String {
-        let result = try await Subprocess.run(tool, arguments, directory: directory)
+    private static func execute(
+        _ tool: String,
+        _ arguments: [String],
+        directory: URL? = nil,
+        environment: [String: String]? = nil
+    ) async throws -> String {
+        let result = try await Subprocess.run(tool, arguments, directory: directory, environment: environment)
         guard result.status == 0 else {
             throw Failure(errorDescription: result.errorMessage
                 ?? "\((tool as NSString).lastPathComponent) exited with \(result.status)")

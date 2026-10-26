@@ -6,6 +6,8 @@ struct AirDropAction: DroviaAction {
     let wheel = WheelKind.actions
     let title = "AirDrop"
     let symbol: String? = "dot.radiowaves.left.and.right"
+    /// Shows the AirDrop sheet.
+    let needsUser = true
 
     func supports(_ types: [UTType]) -> Bool {
         !types.isEmpty
@@ -102,6 +104,8 @@ struct OpenWithAction: DroviaAction {
     let id = "actions.openwith"
     let wheel = WheelKind.actions
     let symbol: String? = "arrow.up.forward.app"
+    /// Asks which app with a menu.
+    let needsUser = true
 
     var title: String {
         String(localized: "Open With")
