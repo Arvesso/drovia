@@ -2,15 +2,20 @@ PROJECT      := Drovia.xcodeproj
 SCHEME       := Drovia
 DERIVED_DATA := build
 APP          := $(DERIVED_DATA)/Build/Products/Debug/Drovia.app
+RELEASE_APP  := $(DERIVED_DATA)/Build/Products/Release/Drovia.app
 XCODEBUILD   := xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination 'platform=macOS,arch=arm64' -derivedDataPath $(DERIVED_DATA)
 
-.PHONY: gen build run test format lint icon clean logs signing docs-images
+.PHONY: gen build release run test format lint icon clean logs signing docs-images
 
 gen:
 	xcodegen generate --quiet
 
 build: gen
 	$(XCODEBUILD) -configuration Debug build -quiet
+
+release: gen
+	$(XCODEBUILD) -configuration Release build -quiet
+	@echo "Built $(RELEASE_APP)"
 
 run: build
 	-pkill -x Drovia; while pgrep -qx Drovia; do sleep 0.1; done

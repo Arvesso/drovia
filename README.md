@@ -57,6 +57,7 @@ make run
 | Command | What it does |
 | --- | --- |
 | `make gen` | Generate `Drovia.xcodeproj` (open it to work in Xcode) |
+| `make release` | Build a Release app into `build/Build/Products/Release` |
 | `make test` | Run the unit tests |
 | `make format` / `make lint` | Format code / check formatting |
 | `make logs` | Stream Drovia's log |
