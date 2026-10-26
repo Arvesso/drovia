@@ -83,3 +83,23 @@ final class TemporaryFolder {
         try? FileManager.default.removeItem(at: url)
     }
 }
+
+/// UserDefaults of its own for a test. Removed afterwards, file included: removing the domain alone leaves
+/// an empty plist in ~/Library/Preferences for every test run.
+final class TestDefaults {
+    let defaults: UserDefaults
+    private let name = "DroviaTests-\(UUID().uuidString)"
+
+    init() {
+        defaults = UserDefaults(suiteName: name)!
+    }
+
+    deinit {
+        defaults.removePersistentDomain(forName: name)
+        // Wait for cfprefsd to write the (now empty) domain, or it recreates the file after it's removed.
+        defaults.synchronize()
+        let file = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Preferences/\(name).plist")
+        try? FileManager.default.removeItem(at: file)
+    }
+}

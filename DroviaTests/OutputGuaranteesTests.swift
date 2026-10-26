@@ -26,7 +26,8 @@ struct OutputGuaranteesTests {
 
     @Test func zipReportsEveryFileItContains() async throws {
         let files = try ["a.txt", "b.txt", "c.txt"].map(makeFile)
-        let settings = SettingsStore(defaults: UserDefaults(suiteName: "OutputGuaranteesTests-\(UUID().uuidString)")!)
+        let testDefaults = TestDefaults()
+        let settings = SettingsStore(defaults: testDefaults.defaults)
         let context = ActionContext(
             settings: settings,
             planner: OutputPlanner(location: .nextToOriginal, template: "{name}-{action}"),
@@ -39,9 +40,8 @@ struct OutputGuaranteesTests {
     }
 
     @Test func unreadableRecipeDoesNotLoseTheOthers() throws {
-        let suite = "OutputGuaranteesTests-\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suite))
-        defer { defaults.removePersistentDomain(forName: suite) }
+        let testDefaults = TestDefaults()
+        let defaults = testDefaults.defaults
         let kept = Recipe(name: "Kept", symbol: "star", steps: [.action(sectorID: "tools.resize")])
         var stored = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode([kept])) as? [Any])
         // A step kind from a newer version.
