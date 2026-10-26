@@ -14,15 +14,18 @@ enum TestImages {
         return try #require(context.makeImage())
     }
 
-    /// Black text on white, large enough for OCR.
-    static func text(_ string: String) throws -> CGImage {
-        let size = CGSize(width: 1400, height: 200)
-        let image = NSImage(size: size, flipped: false) { rect in
+    /// Black text on white, large enough for OCR, one line per string.
+    static func text(_ lines: String...) throws -> CGImage {
+        let lineHeight: CGFloat = 100
+        let size = CGSize(width: 1400, height: 100 + lineHeight * CGFloat(lines.count))
+        let image = NSImage(size: size, flipped: true) { rect in
             NSColor.white.setFill()
             rect.fill()
-            NSAttributedString(string: string, attributes: [
-                .font: NSFont.systemFont(ofSize: 56), .foregroundColor: NSColor.black,
-            ]).draw(at: NSPoint(x: 40, y: 60))
+            for (index, line) in lines.enumerated() {
+                NSAttributedString(string: line, attributes: [
+                    .font: NSFont.systemFont(ofSize: 56), .foregroundColor: NSColor.black,
+                ]).draw(at: NSPoint(x: 40, y: 50 + lineHeight * CGFloat(index)))
+            }
             return true
         }
         return try #require(image.cgImage(forProposedRect: nil, context: nil, hints: nil))
@@ -165,5 +168,14 @@ struct VisionEngineTests {
         #expect(regions.count == 1)
         // The email sits on the right part of the line, not over "Contact:".
         #expect((regions.first?.minX ?? 0) > 200)
+    }
+
+    @Test func findsCardNumberWrappedOntoNextLine() throws {
+        let image = try TestImages.text("Card 4111 1111", "1111 1111")
+        let regions = try VisionEngine.sensitiveRegions(in: image, targets: .personalText)
+        // Both halves are covered: one region on each line.
+        let middle = CGFloat(image.height) / 2
+        #expect(regions.contains { $0.midY < middle })
+        #expect(regions.contains { $0.midY > middle })
     }
 }
