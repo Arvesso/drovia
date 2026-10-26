@@ -1,4 +1,5 @@
 import AppKit
+import PDFKit
 import UniformTypeIdentifiers
 
 private func allImages(_ types: [UTType]) -> Bool {
@@ -75,9 +76,13 @@ struct RedactAction: DroviaAction {
             try ImageEngine.encode(redacted, properties: [:], as: format, to: destination, quality: quality)
             return destination
         }
+        let untouched = result.processed.count(where: { $0.output == nil })
         if result.outputs.isEmpty, result.failures.isEmpty {
             result.message = String(localized: "Nothing to redact found")
             result.detail = String(localized: "Use Annotate to hide areas by hand")
+        } else if untouched > 0 {
+            // Otherwise those files look processed and might be shared as they are.
+            result.detail = String(localized: "\(untouched) files had nothing to redact")
         }
         return result
     }
@@ -103,34 +108,57 @@ struct RecognizeTextAction: DroviaAction {
 
     func perform(_ files: [URL], context: ActionContext) async throws -> ActionResult {
         var texts: [String] = []
+        var failures: [ActionFailure] = []
         for (index, file) in files.enumerated() {
-            let text = try await Task.detached { try Self.text(of: file) }.value
-            if !text.isEmpty {
-                texts.append(text)
+            try Task.checkCancellation()
+            do {
+                let text = try await Task.detached { try Self.text(of: file) }.value
+                if !text.isEmpty {
+                    texts.append(text)
+                }
+            } catch {
+                // One unreadable file shouldn't lose the text of the others.
+                failures.append(ActionFailure(file: file, message: error.localizedDescription))
             }
             context.reportProgress(Double(index + 1) / Double(files.count))
         }
         guard !texts.isEmpty else {
-            return ActionResult(message: String(localized: "No text found"))
+            return failures.isEmpty ? ActionResult(message: String(localized: "No text found"))
+                : ActionResult(failures: failures)
         }
         let text = texts.joined(separator: "\n\n")
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(text, forType: .string)
         let firstLine = text.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
-        return ActionResult(message: String(localized: "Text copied"), detail: firstLine)
+        // Some text was copied, so this is a success that mentions the files left out.
+        let detail = failures.isEmpty ? firstLine : String(localized: "\(failures.count) files couldn't be read")
+        return ActionResult(message: String(localized: "Text copied"), detail: detail)
     }
 
     private nonisolated static func text(of file: URL) throws -> String {
         guard UTType(filenameExtension: file.pathExtension)?.conforms(to: .pdf) == true else {
             return try VisionEngine.text(in: ImageEngine.loadImage(file))
         }
-        // Use the PDF's own text when it has one; scans get OCR page by page.
-        let embedded = try PDFEngine.text(of: file).trimmingCharacters(in: .whitespacesAndNewlines)
-        if !embedded.isEmpty {
-            return embedded
+        // Pages with a text layer use it; scanned pages get OCR. Decided per page, since scans often come
+        // with a typed cover page or a stamped header.
+        let document = try PDFEngine.open(file)
+        var pages: [String] = []
+        for index in 0 ..< document.pageCount {
+            guard let page = document.page(at: index) else { continue }
+            var text = page.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if text.isEmpty, let image = PDFEngine.render(page, scale: ocrScale(for: page)) {
+                text = try VisionEngine.text(in: image)
+            }
+            if !text.isEmpty {
+                pages.append(text)
+            }
         }
-        return try (0 ..< PDFEngine.pageCount(of: file))
-            .map { try VisionEngine.text(in: PDFEngine.renderPage($0, of: file)) }
-            .joined(separator: "\n\n")
+        return pages.joined(separator: "\n\n")
+    }
+
+    /// About 300 dpi, the resolution scans are made at, so small print survives; capped for huge pages.
+    private nonisolated static func ocrScale(for page: PDFPage) -> CGFloat {
+        let bounds = page.bounds(for: .cropBox)
+        return min(300.0 / 72, 8000 / max(bounds.width, bounds.height, 1))
     }
 }

@@ -73,7 +73,7 @@ enum VisionEngine {
         return request.results ?? []
     }
 
-    /// Recognized text in reading order, one line per observation.
+    /// Recognized text, one line per observation, in the order Vision returns them.
     static func text(in image: CGImage) throws -> String {
         try recognizeText(in: image)
             .compactMap { $0.topCandidates(1).first?.string }
@@ -107,16 +107,40 @@ enum VisionEngine {
             ) }
         }
         if targets.contains(.personalText) {
-            for observation in try recognizeText(in: image) {
-                guard let candidate = observation.topCandidates(1).first else { continue }
-                for range in sensitiveRanges(in: candidate.string) {
-                    guard let box = try? candidate.boundingBox(for: range) else { continue }
-                    regions.append(pixelRect(box.boundingBox, in: size).insetBy(dx: -2, dy: -2))
-                }
-            }
+            regions += try sensitiveTextRegions(in: image, size: size)
         }
         let bounds = CGRect(origin: .zero, size: size)
         return regions.map { $0.intersection(bounds) }.filter { !$0.isEmpty }
+    }
+
+    /// Searches all recognized lines joined together, so a card number or phone number wrapped onto the
+    /// next line (or split into separate observations) is still found. Each part of a match is covered on
+    /// its own line; when Vision can't locate a part precisely, its whole line is covered.
+    private static func sensitiveTextRegions(in image: CGImage, size: CGSize) throws -> [CGRect] {
+        let lines = try recognizeText(in: image).compactMap { observation in
+            observation.topCandidates(1).first.map { (observation: observation, candidate: $0) }
+        }
+        var text = ""
+        var starts: [Int] = []
+        for line in lines {
+            starts.append((text as NSString).length)
+            text += line.candidate.string + " "
+        }
+        var regions: [CGRect] = []
+        for match in sensitiveRanges(in: text).map({ NSRange($0, in: text) }) {
+            for (index, line) in lines.enumerated() {
+                let string = line.candidate.string
+                let lineRange = NSRange(location: starts[index], length: (string as NSString).length)
+                guard let overlap = match.intersection(lineRange), overlap.length > 0 else { continue }
+                let local = NSRange(location: overlap.location - lineRange.location, length: overlap.length)
+                let box = Range(local, in: string).flatMap { try? line.candidate.boundingBox(for: $0)?.boundingBox }
+                let rect = pixelRect(box ?? line.observation.boundingBox, in: size)
+                // Vision's text boxes clip ascenders, descenders and edge glyphs; pad by the line height.
+                let padding = max(2, rect.height * 0.3)
+                regions.append(rect.insetBy(dx: -padding, dy: -padding))
+            }
+        }
+        return regions
     }
 
     /// Ranges of emails, phone numbers, links and card-like digit runs.
@@ -149,7 +173,9 @@ enum VisionEngine {
                 cover = CIImage(color: .black).cropped(to: rect)
             case .pixelate:
                 let scale = max(8, max(rect.width, rect.height) / 10)
+                // Blurring first makes the blocks impossible to match against rendered text (as Depix does).
                 cover = original.clampedToExtent()
+                    .applyingGaussianBlur(sigma: scale / 2)
                     .applyingFilter(
                         "CIPixellate",
                         parameters: [kCIInputScaleKey: scale, kCIInputCenterKey: CIVector(cgPoint: rect.origin)]

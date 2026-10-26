@@ -32,6 +32,11 @@ enum PDFEngine {
     static func renderPage(_ index: Int, of url: URL, scale: CGFloat = 2) throws -> CGImage {
         let document = try open(url)
         guard let page = document.page(at: index) else { throw PDFEngineError.unreadable(url) }
+        return try render(page, scale: scale).orThrow(PDFEngineError.unreadable(url))
+    }
+
+    /// Renders `page` at `scale` × its point size, white background, rotation applied.
+    static func render(_ page: PDFPage, scale: CGFloat) -> CGImage? {
         let bounds = page.bounds(for: .cropBox)
         let rotated = page.rotation % 180 != 0
         let size = CGSize(
@@ -42,13 +47,13 @@ enum PDFEngine {
             data: nil, width: Int(size.width), height: Int(size.height), bitsPerComponent: 8, bytesPerRow: 0,
             space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
         ) else {
-            throw PDFEngineError.unreadable(url)
+            return nil
         }
         context.setFillColor(CGColor(gray: 1, alpha: 1))
         context.fill(CGRect(origin: .zero, size: size))
         context.scaleBy(x: scale, y: scale)
         page.draw(with: .cropBox, to: context)
-        return try context.makeImage().orThrow(PDFEngineError.unreadable(url))
+        return context.makeImage()
     }
 
     /// Combines PDFs and images, in order, into one PDF.
