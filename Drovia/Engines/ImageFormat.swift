@@ -48,8 +48,14 @@ enum ImageFormat: String, CaseIterable, Sendable {
 
     /// The format of a file of this type, if it is one we know.
     init?(type: UTType) {
-        guard let format = Self.allCases.first(where: { type.conforms(to: $0.utType) }) else { return nil }
-        self = format
+        if let format = Self.allCases.first(where: { type.conforms(to: $0.utType) }) {
+            self = format
+        } else if type.conforms(to: .heif) {
+            // .heif files are public.heif, which public.heic conforms to but not the other way round.
+            self = .heic
+        } else {
+            return nil
+        }
     }
 
     /// Format to write when processing a file of `type` in place: the same format when we can write it,
