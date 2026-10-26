@@ -10,10 +10,16 @@ final class ImageEditor: NSObject, NSWindowDelegate {
     private let model: EditorModel
     private let window: NSWindow
 
-    static func edit(_ files: [URL], mode: EditorMode, redaction: RedactionStyle) async -> [EditedImage] {
+    /// Returns when the editor closes; `save` gets each image as soon as the user saves it.
+    static func edit(
+        _ files: [URL],
+        mode: EditorMode,
+        redaction: RedactionStyle,
+        save: @escaping (EditedImage) async -> Void
+    ) async {
         await withCheckedContinuation { continuation in
-            let editor = ImageEditor(files: files, mode: mode, redaction: redaction) {
-                continuation.resume(returning: $0)
+            let editor = ImageEditor(files: files, mode: mode, redaction: redaction, save: save) {
+                continuation.resume()
             }
             open.append(editor)
             editor.show()
@@ -24,9 +30,11 @@ final class ImageEditor: NSObject, NSWindowDelegate {
         files: [URL],
         mode: EditorMode,
         redaction: RedactionStyle,
-        completion: @escaping ([EditedImage]) -> Void
+        save: @escaping (EditedImage) async -> Void,
+        completion: @escaping () -> Void
     ) {
         model = EditorModel(files: files, mode: mode, redaction: redaction)
+        model.onSave = save
         window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1040, height: 740),
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
@@ -40,9 +48,9 @@ final class ImageEditor: NSObject, NSWindowDelegate {
         window.isRestorable = false
         window.delegate = self
         window.title = files[0].lastPathComponent
-        model.onFinish = { [weak self] results in
+        model.onFinish = { [weak self] in
             self?.close()
-            completion(results)
+            completion()
         }
         withObservationTracking { _ = model.index } onChange: { [weak self] in
             Task { @MainActor in self?.updateTitle() }

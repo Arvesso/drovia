@@ -161,7 +161,8 @@ struct DocumentEngineTests {
     }
 
     @Test func convertsRichTextToEveryFormat() throws {
-        let source = folder.url.appendingPathComponent("note.rtf")
+        // Not "note.rtf": the RTF output must not overwrite its own input.
+        let source = folder.url.appendingPathComponent("source.rtf")
         let text = NSAttributedString(string: "Hello, Drovia", attributes: [.font: NSFont.boldSystemFont(ofSize: 20)])
         try text.data(
             from: NSRange(location: 0, length: text.length),
@@ -176,6 +177,22 @@ struct DocumentEngineTests {
         }
         let pdf = try #require(PDFDocument(url: folder.url.appendingPathComponent("note.pdf")))
         #expect(pdf.string?.contains("Hello, Drovia") == true)
+    }
+
+    @Test func longTextFlowsOntoSeveralPagesOffTheMainThread() async throws {
+        let source = folder.url.appendingPathComponent("long.txt")
+        try (1 ... 300).map { "Line \($0)" }.joined(separator: "\n").write(
+            to: source,
+            atomically: true,
+            encoding: .utf8
+        )
+        let output = folder.url.appendingPathComponent("long.pdf")
+        try await Task.detached { try DocumentEngine.convert(source, to: .pdf, at: output) }.value
+        let pdf = try #require(PDFDocument(url: output))
+        #expect(pdf.pageCount > 1)
+        // Every line made it, none cut off between pages.
+        #expect(pdf.string?.contains("Line 1\n") == true)
+        #expect(pdf.string?.contains("Line 300") == true)
     }
 }
 

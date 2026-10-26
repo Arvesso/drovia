@@ -81,6 +81,12 @@ struct DroppedFiles {
     nonisolated static let temporaryRoot = FileManager.default.temporaryDirectory
         .appendingPathComponent("Dropped", isDirectory: true)
 
+    /// Files received from Safari, Mail and the like in an earlier session. Nothing refers to them any more
+    /// (results went to Downloads), and they may be large or private attachments.
+    nonisolated static func removeLeftovers() {
+        try? FileManager.default.removeItem(at: temporaryRoot)
+    }
+
     private static func makeTemporaryFolder() throws -> URL {
         let folder = temporaryRoot.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

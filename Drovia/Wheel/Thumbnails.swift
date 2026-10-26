@@ -24,10 +24,16 @@ enum Thumbnails {
             scale: scale,
             representationTypes: .thumbnail
         )
-        return await withCheckedContinuation { continuation in
-            QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { representation, _ in
-                continuation.resume(returning: representation?.cgImage)
+        // A drag that ends early cancels its request, so quick drags of large videos don't pile up work.
+        nonisolated(unsafe) let pending = request
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { continuation in
+                QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { representation, _ in
+                    continuation.resume(returning: representation?.cgImage)
+                }
             }
+        } onCancel: {
+            QLThumbnailGenerator.shared.cancel(pending)
         }
     }
 }

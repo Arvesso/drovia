@@ -80,11 +80,14 @@ struct EditorModelTests {
         #expect(model.textEntry == nil)
     }
 
-    @Test func savingReturnsRenderedImage() async {
+    @Test func savingHandsOverRenderedImageAndFinishes() async {
         var results: [EditedImage] = []
-        model.onFinish = { results = $0 }
+        var finished = false
+        model.onSave = { results.append($0) }
+        model.onFinish = { finished = true }
         model.mode = .background
         await model.save()
+        #expect(finished)
         #expect(results.count == 1)
         // The default background adds padding around the 400×200 image.
         #expect((results.first?.image.width ?? 0) > 400)

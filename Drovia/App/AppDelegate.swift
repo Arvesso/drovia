@@ -31,11 +31,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_: Notification) {
         // Unit tests run inside the app; they need its code, not its global monitors or windows.
         guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
+        // Before drags are watched, so no new drop lands in the folder being removed.
+        DroppedFiles.removeLeftovers()
         wheelCoordinator.start()
         // Files dragged out of the shelf can go onto the wheel too.
         shelf.onDragStart = { [weak self] in self?.wheelCoordinator.beginInternalDrag(with: $0) }
         shelf.onDragEnd = { [weak self] in self?.wheelCoordinator.endInternalDrag() }
-        KeyboardShortcuts.onKeyUp(for: .showWheel) { [weak self] in self?.wheelCoordinator.openForFinderSelection() }
+        KeyboardShortcuts.onKeyUp(for: .showWheel) { [weak self] in
+            Task { await self?.wheelCoordinator.openForFinderSelection() }
+        }
         onboarding.onPracticeDragStart = { [weak self] in self?.wheelCoordinator.beginInternalDrag(with: $0) }
         onboarding.onPracticeDragEnd = { [weak self] in self?.wheelCoordinator.endInternalDrag() }
         onboarding.showIfNeeded()

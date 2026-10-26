@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 import UniformTypeIdentifiers
 
 struct DocumentConvertAction: DroviaAction {
@@ -33,15 +33,24 @@ struct DocumentConvertAction: DroviaAction {
             && types.contains { !$0.conforms(to: format.utType) }
     }
 
-    /// Runs on the main actor one file at a time: AppKit text import and printing aren't thread-safe.
+    /// One file at a time. HTML is read on the main thread (WebKit); everything else is converted in the
+    /// background, so a long document doesn't freeze the app.
     func perform(_ files: [URL], context: ActionContext) async throws -> ActionResult {
         var result = ActionResult()
+        let format = format
+        let paperSize = NSPrintInfo.shared.paperSize
         for (index, source) in files.enumerated() {
             do {
                 let destination = await context.planner.destination(
                     for: source, action: nil, fileExtension: format.fileExtension
                 )
-                try DocumentEngine.write(DocumentEngine.read(source), as: format, to: destination)
+                if DocumentEngine.needsMainThread(source) {
+                    try DocumentEngine.convert(source, to: format, at: destination, paperSize: paperSize)
+                } else {
+                    try await Task.detached(priority: .userInitiated) {
+                        try DocumentEngine.convert(source, to: format, at: destination, paperSize: paperSize)
+                    }.value
+                }
                 result.processed.append(ProcessedFile(source: source, output: destination))
             } catch {
                 result.failures.append(ActionFailure(file: source, message: error.localizedDescription))

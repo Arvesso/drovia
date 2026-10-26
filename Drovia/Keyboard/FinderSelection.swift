@@ -6,7 +6,6 @@ extension KeyboardShortcuts.Name {
 }
 
 /// Reads Finder's selection through Apple Events (needs the user's Automation consent once).
-@MainActor
 enum FinderSelection {
     enum Failure: LocalizedError {
         case notAllowed
@@ -20,29 +19,36 @@ enum FinderSelection {
         }
     }
 
+    /// One path per line. A busy Finder (a stalled network volume, a big copy) gets a few seconds, not the
+    /// default two minutes.
     private static let script = """
-    tell application "Finder"
-        set picked to selection as alias list
-        set paths to {}
-        repeat with item_ in picked
-            set end of paths to POSIX path of (item_ as alias)
-        end repeat
-        return paths
-    end tell
+    with timeout of 5 seconds
+        tell application "Finder"
+            set picked to selection as alias list
+            set paths to {}
+            repeat with item_ in picked
+                set end of paths to POSIX path of (item_ as alias)
+            end repeat
+        end tell
+    end timeout
+    set AppleScript's text item delimiters to linefeed
+    return paths as text
     """
 
-    static func selectedFiles() throws -> [URL] {
-        var error: NSDictionary?
-        guard let result = NSAppleScript(source: script)?.executeAndReturnError(&error) else {
-            let code = error?[NSAppleScript.errorNumber] as? Int
-            if code == -1743 {
+    /// Runs in `osascript`, off the main thread: NSAppleScript must run on it and would freeze the app while
+    /// waiting for Finder. macOS attributes the Apple Events to Drovia, so its Automation consent applies.
+    static func selectedFiles() async throws -> [URL] {
+        let result = try await Subprocess.run("/usr/bin/osascript", ["-e", script])
+        guard result.status == 0 else {
+            let message = result.errorMessage ?? "osascript exited with \(result.status)"
+            if message.contains("(-1743)") {
                 throw Failure.notAllowed
             }
-            throw Failure.scriptFailed(error?[NSAppleScript.errorMessage] as? String ?? "AppleScript error")
+            throw Failure.scriptFailed(message)
         }
-        guard result.numberOfItems > 0 else { return [] }
-        return (1 ... result.numberOfItems).compactMap { result.atIndex($0)?.stringValue }
-            .map { URL(fileURLWithPath: $0) }
+        return String(decoding: result.standardOutput, as: UTF8.self)
+            .split(separator: "\n", omittingEmptySubsequences: true)
+            .map { URL(fileURLWithPath: String($0)) }
     }
 }
 
