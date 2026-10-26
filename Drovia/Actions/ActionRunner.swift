@@ -85,6 +85,13 @@ final class ActionRunner {
                 symbol: "arrow.uturn.backward.circle.fill",
                 tint: .secondary
             )
+        } catch UndoError.alreadyUndone {
+            toast.show(
+                String(localized: "Nothing to undo"),
+                detail: entry.title,
+                symbol: "arrow.uturn.backward.circle",
+                tint: .secondary
+            )
         } catch {
             toast.showError(String(localized: "Couldn't undo everything"), detail: error.localizedDescription)
         }

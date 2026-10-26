@@ -5,6 +5,18 @@ struct WheelLayout: Equatable, Codable {
     /// Sector order per wheel (`WheelKind.rawValue` → sector IDs). Sectors missing here keep their default place.
     var order: [String: [String]] = [:]
     var hidden: Set<String> = []
+
+    init(order: [String: [String]] = [:], hidden: Set<String> = []) {
+        self.order = order
+        self.hidden = hidden
+    }
+
+    /// Missing fields keep their defaults, so adding one later doesn't reset the user's layout.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        order = try container.decodeIfPresent([String: [String]].self, forKey: .order) ?? [:]
+        hidden = try container.decodeIfPresent(Set<String>.self, forKey: .hidden) ?? []
+    }
 }
 
 /// A sector as shown in the wheel editor, standing for all its per-file-kind variants.

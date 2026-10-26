@@ -28,7 +28,7 @@ struct SettingsView: View {
         .frame(width: 620, height: 520)
         .onAppear {
             // Until something is allowed, folders are the only setting that matters.
-            if folderAccess.folders.isEmpty {
+            if !folderAccess.hasAccess {
                 selection = .folders
             }
         }

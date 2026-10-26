@@ -247,6 +247,58 @@
         }
       }
     },
+    "%lld items couldn't be put back": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld item couldn't be put back"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld items couldn't be put back"
+                }
+              }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Не удалось вернуть %lld объект"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Не удалось вернуть %lld объекта"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Не удалось вернуть %lld объектов"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Не удалось вернуть %lld объекта"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld of %lld": {
       "localizations": {
         "ru": {
@@ -2039,6 +2091,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Нечего скрывать"
+          }
+        }
+      }
+    },
+    "Nothing to undo": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нечего отменять"
           }
         }
       }

@@ -128,6 +128,8 @@ struct RecipeAction: DroviaAction {
                     var next: [URL] = []
                     for processed in stepResult.processed {
                         let file = processed.output ?? processed.source
+                        // Several sources can share one result (a zip); it goes on once.
+                        guard !next.contains(file) else { continue }
                         origin[file] = origin[processed.source] ?? processed.source
                         next.append(file)
                     }

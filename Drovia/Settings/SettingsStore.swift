@@ -222,8 +222,10 @@ final class SettingsStore {
         wheelLayout = defaults.data(forKey: Keys.wheelLayout)
             .flatMap { try? JSONDecoder().decode(WheelLayout.self, from: $0) } ?? WheelLayout()
         excludedApps = defaults.stringArray(forKey: Keys.excludedApps) ?? []
+        // Recipes that can't be read (saved by a newer version) are skipped, not all lost.
         recipes = defaults.data(forKey: Keys.recipes)
-            .flatMap { try? JSONDecoder().decode([Recipe].self, from: $0) } ?? Recipe.examples
+            .flatMap { try? JSONDecoder().decode([Lossy<Recipe>].self, from: $0).compactMap(\.value) } ?? Recipe
+            .examples
         outputLocation = defaults.enumValue(forKey: Keys.outputLocation) ?? .nextToOriginal
         outputFolderPath = defaults.string(forKey: Keys.outputFolderPath)
         fileNameTemplate = defaults.string(forKey: Keys.fileNameTemplate) ?? NamingTemplate.defaultTemplate

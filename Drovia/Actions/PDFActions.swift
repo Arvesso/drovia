@@ -131,7 +131,7 @@ struct PDFMergeAction: DroviaAction {
         let destination = await context.planner.destination(for: files[0], action: "merged", fileExtension: "pdf")
         try await Task.detached { try PDFEngine.merge(files, to: destination) }.value
         return ActionResult(
-            processed: [ProcessedFile(source: files[0], output: destination)],
+            processed: files.map { ProcessedFile(source: $0, output: destination) },
             message: destination.lastPathComponent,
             detail: String(localized: "\(files.count) files merged")
         )

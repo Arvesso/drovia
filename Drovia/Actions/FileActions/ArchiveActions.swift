@@ -28,7 +28,8 @@ struct ZipAction: DroviaAction {
         )
         try await ArchiveEngine.zip(files, to: destination)
         return ActionResult(
-            processed: [ProcessedFile(source: files[0], output: destination)],
+            // Every file went into the archive, so "trash originals" covers all of them.
+            processed: files.map { ProcessedFile(source: $0, output: destination) },
             message: destination.lastPathComponent,
             detail: destination.fileSize.map { Int64($0).formatted(.byteCount(style: .file)) }
         )

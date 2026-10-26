@@ -180,7 +180,7 @@ private struct FoldersPage: View {
             .foregroundStyle(.secondary)
             .frame(maxWidth: 460)
 
-            if folderAccess.folders.isEmpty {
+            if !folderAccess.hasAccess {
                 HStack {
                     Button("Add Home Folder") { folderAccess.addHomeFolder() }
                         .buttonStyle(.borderedProminent)
