@@ -37,12 +37,16 @@ final class WheelDropView: NSView {
         addTrackingArea(NSTrackingArea(rect: .zero, options: [.mouseMoved, .activeAlways, .inVisibleRect], owner: self))
     }
 
+    /// Keyboard mode. The flick margin around the ring is for drags only: a click there is a click outside.
     override func mouseMoved(with event: NSEvent) {
-        onHighlight?(sector(at: convert(event.locationInWindow, from: nil)))
+        // Hovering the hole or outside keeps the sector chosen with the keys, so Return still runs it.
+        if let index = sector(at: convert(event.locationInWindow, from: nil), within: model.geometry.outerRadius) {
+            onHighlight?(index)
+        }
     }
 
     override func mouseDown(with event: NSEvent) {
-        onClick?(sector(at: convert(event.locationInWindow, from: nil)))
+        onClick?(sector(at: convert(event.locationInWindow, from: nil), within: model.geometry.outerRadius))
     }
 
     override func draggingEntered(_ sender: any NSDraggingInfo) -> NSDragOperation {
@@ -79,7 +83,7 @@ final class WheelDropView: NSView {
         sector(at: convert(sender.draggingLocation, from: nil))
     }
 
-    private func sector(at point: NSPoint) -> Int? {
-        model.geometry.sector(at: CGVector(dx: point.x - bounds.midX, dy: point.y - bounds.midY))
+    private func sector(at point: NSPoint, within reach: CGFloat? = nil) -> Int? {
+        model.geometry.sector(at: CGVector(dx: point.x - bounds.midX, dy: point.y - bounds.midY), within: reach)
     }
 }

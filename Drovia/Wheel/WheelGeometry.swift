@@ -37,10 +37,10 @@ struct WheelGeometry: Equatable, Sendable {
     }
 
     /// The sector in the direction of `offset` from the wheel center (y axis pointing up),
-    /// or `nil` inside the central hole or beyond the catch radius.
-    func sector(at offset: CGVector) -> Int? {
+    /// or `nil` inside the central hole or beyond `reach` (the catch radius unless given).
+    func sector(at offset: CGVector, within reach: CGFloat? = nil) -> Int? {
         let distance = hypot(offset.dx, offset.dy)
-        guard sectorCount > 0, distance >= innerRadius, distance <= catchRadius else { return nil }
+        guard sectorCount > 0, distance >= innerRadius, distance <= reach ?? catchRadius else { return nil }
         // atan2(x, y) measures clockwise from the positive y axis.
         var angle = atan2(Double(offset.dx), Double(offset.dy))
         if angle < 0 {

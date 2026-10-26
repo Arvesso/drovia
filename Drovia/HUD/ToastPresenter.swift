@@ -34,8 +34,8 @@ final class ToastPresenter {
         return panel
     }()
 
-    var isShowingProgress: Bool {
-        model.isVisible && model.progress != nil
+    var isVisible: Bool {
+        model.isVisible
     }
 
     func show(
@@ -92,12 +92,25 @@ final class ToastPresenter {
         panel.ignoresMouseEvents = reveal.isEmpty && undo == nil
 
         if !model.isVisible {
-            let mouse = NSEvent.mouseLocation
-            let size = panel.frame.size
-            panel.setFrameOrigin(NSPoint(x: mouse.x - size.width / 2, y: mouse.y - size.height - 24))
+            panel.setFrameOrigin(Self.origin(for: panel.frame.size, near: NSEvent.mouseLocation))
         }
         panel.orderFrontRegardless()
         model.isVisible = true
+    }
+
+    /// Below the pointer, or above it when there's no room, and always fully on the pointer's screen.
+    static func origin(for size: CGSize, near mouse: NSPoint, screens: [CGRect]? = nil) -> NSPoint {
+        let frames = screens ?? NSScreen.screens.map(\.visibleFrame)
+        let gap: CGFloat = 24
+        var origin = NSPoint(x: mouse.x - size.width / 2, y: mouse.y - size.height - gap)
+        guard let visible = frames.first(where: { $0.insetBy(dx: -1, dy: -1).contains(mouse) }) ?? frames.first
+        else { return origin }
+        if origin.y < visible.minY {
+            origin.y = mouse.y + gap
+        }
+        origin.x = min(max(origin.x, visible.minX), visible.maxX - size.width)
+        origin.y = min(max(origin.y, visible.minY), visible.maxY - size.height)
+        return origin
     }
 
     private func scheduleHide(after duration: Duration) {

@@ -17,6 +17,13 @@ struct WheelGeometryTests {
         #expect(four.sector(at: CGVector(dx: 30, dy: 30)) == nil)
     }
 
+    @Test func clicksCountOnlyOnTheRing() {
+        let justOutside = CGVector(dx: 0, dy: four.outerRadius + 20)
+        #expect(four.sector(at: justOutside) == 0)
+        #expect(four.sector(at: justOutside, within: four.outerRadius) == nil)
+        #expect(four.sector(at: CGVector(dx: 0, dy: four.outerRadius - 1), within: four.outerRadius) == 0)
+    }
+
     @Test func flickMarginStillSelects() {
         let pastWheel = four.outerRadius + WheelGeometry.flickMargin / 2
         #expect(four.sector(at: CGVector(dx: 0, dy: pastWheel)) == 0)

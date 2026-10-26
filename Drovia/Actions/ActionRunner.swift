@@ -11,6 +11,9 @@ final class ActionRunner {
     private let toast: ToastPresenter
     private let history: HistoryStore
     private let shelf: ShelfController
+    /// The run whose progress the toast shows. Other runs wait for their summary, so parallel runs don't
+    /// take turns overwriting the toast, replace a summary and its Undo button, or hide each other's toast.
+    private var progressOwner: UUID?
 
     init(settings: SettingsStore, toast: ToastPresenter, history: HistoryStore, shelf: ShelfController) {
         self.settings = settings
@@ -23,26 +26,43 @@ final class ActionRunner {
         guard !files.isEmpty else { return }
         let tint = action.wheel.tint
 
+        let run = UUID()
         let progress = ProgressBox()
         let progressTask = Task {
+            guard !action.isInteractive else { return }
             try? await Task.sleep(for: Self.progressDelay)
-            guard !Task.isCancelled, !action.isInteractive else { return }
-            toast.showProgress(action.progressTitle, fraction: progress.fraction, tint: tint)
+            // Waits while another run's progress or a summary is on screen.
+            while !Task.isCancelled {
+                if progressOwner == nil, !toast.isVisible {
+                    progressOwner = run
+                    toast.showProgress(action.progressTitle, fraction: progress.fraction, tint: tint)
+                    return
+                }
+                try? await Task.sleep(for: .milliseconds(300))
+            }
+        }
+        // Ends this run's claim on the toast; true if it was showing this run's progress.
+        func releaseToast() -> Bool {
+            progressTask.cancel()
+            guard progressOwner == run else { return false }
+            progressOwner = nil
+            return true
         }
         do {
-            let (result, entry) = try await execute(action, on: files, allowsPrompts: true) { [toast] fraction in
+            let (result, entry) = try await execute(action, on: files, allowsPrompts: true) { [weak self] fraction in
                 progress.fraction = fraction
-                if toast.isShowingProgress {
-                    toast.showProgress(action.progressTitle, fraction: fraction, tint: tint)
+                if self?.progressOwner == run {
+                    self?.toast.showProgress(action.progressTitle, fraction: fraction, tint: tint)
                 }
             }
-            progressTask.cancel()
+            _ = releaseToast()
             showSummary(of: result, action: action, undoable: entry)
         } catch is CancellationError {
-            progressTask.cancel()
-            toast.hide()
+            if releaseToast() {
+                toast.hide()
+            }
         } catch {
-            progressTask.cancel()
+            _ = releaseToast()
             Logger.wheel.error("\(action.id) failed: \(error.localizedDescription)")
             toast.showError(String(localized: "\(action.title) failed"), detail: error.localizedDescription)
         }

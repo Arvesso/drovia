@@ -45,13 +45,23 @@ final class WheelPanel: NSPanel {
     func present(at point: NSPoint, geometry: WheelGeometry) {
         let side = geometry.panelSide
         var center = point
-        if let screen = NSScreen.screens.first(where: { NSMouseInRect(point, $0.frame, false) }) {
-            let visible = screen.visibleFrame.insetBy(dx: geometry.outerRadius, dy: geometry.outerRadius)
+        // The pointer can sit exactly on a screen's top edge, which NSMouseInRect counts as outside.
+        let screen = NSScreen.screens.first { $0.frame.insetBy(dx: -1, dy: -1).contains(point) } ?? NSScreen.main
+        if let screen {
+            // In keyboard mode the key hints sit below the ring.
+            let reach = geometry.outerRadius + (acceptsKeyboard ? 64 : 0)
+            let visible = screen.visibleFrame.insetBy(dx: reach, dy: reach)
             center.x = min(max(center.x, visible.minX), visible.maxX)
             center.y = min(max(center.y, visible.minY), visible.maxY)
         }
         setFrame(NSRect(x: center.x - side / 2, y: center.y - side / 2, width: side, height: side), display: true)
         contentView?.subviews.forEach { $0.frame = contentView?.bounds ?? .zero }
         orderFrontRegardless()
+    }
+
+    /// Resizes a shown panel for a wheel with a different number of sectors, around the same center.
+    func update(geometry: WheelGeometry) {
+        guard isVisible, frame.width != geometry.panelSide else { return }
+        present(at: NSPoint(x: frame.midX, y: frame.midY), geometry: geometry)
     }
 }
