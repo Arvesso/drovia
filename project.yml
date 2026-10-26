@@ -21,13 +21,15 @@ settings:
     SWIFT_EMIT_LOC_STRINGS: YES
     DEAD_CODE_STRIPPING: YES
 
+# Exact versions: the resolved file lives in the generated (uncommitted) project, so ranges would let
+# every fresh clone and CI run pick up new releases.
 packages:
   libwebp:
     url: https://github.com/SDWebImage/libwebp-Xcode
-    from: 1.5.0
+    exactVersion: 1.6.0
   KeyboardShortcuts:
     url: https://github.com/sindresorhus/KeyboardShortcuts
-    from: 3.0.0
+    exactVersion: 3.1.0
 
 targets:
   Drovia:
@@ -45,12 +47,27 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_LSUIElement: YES
         INFOPLIST_KEY_NSAppleEventsUsageDescription: "Drovia reads the files selected in Finder when you open the wheel with the keyboard shortcut."
+        INFOPLIST_KEY_NSDesktopFolderUsageDescription: "Drovia works with the files you drop on the wheel from your Desktop."
+        INFOPLIST_KEY_NSDocumentsFolderUsageDescription: "Drovia works with the files you drop on the wheel from your Documents folder."
+        INFOPLIST_KEY_NSDownloadsFolderUsageDescription: "Drovia works with the files you drop on the wheel from your Downloads folder."
+        INFOPLIST_KEY_NSRemovableVolumesUsageDescription: "Drovia works with the files you drop on the wheel from external drives."
+        INFOPLIST_KEY_NSNetworkVolumesUsageDescription: "Drovia works with the files you drop on the wheel from network drives."
         INFOPLIST_KEY_CFBundleDisplayName: Drovia
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         INFOPLIST_KEY_NSHumanReadableCopyright: "© 2026 Arvesso. MIT License."
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        ENABLE_HARDENED_RUNTIME: NO
+        CODE_SIGN_ENTITLEMENTS: Drovia/Drovia.entitlements
+      configs:
+        # Without the hardened runtime, any process could inject code into Drovia and inherit its folder
+        # and Full Disk Access permissions; it's also required for notarization. Debug builds stay without
+        # it so the (differently signed) test bundle can load into the app.
+        Release:
+          ENABLE_HARDENED_RUNTIME: YES
+          # Development signing would add get-task-allow, which lets other processes attach and inject code.
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
+        Debug:
+          ENABLE_HARDENED_RUNTIME: NO
 
   DroviaTests:
     type: bundle.unit-test

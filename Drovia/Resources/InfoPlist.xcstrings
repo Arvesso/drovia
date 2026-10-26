@@ -1,0 +1,72 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSAppleEventsUsageDescription": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia читает файлы, выбранные в Finder, когда вы открываете колесо сочетанием клавиш."
+          }
+        }
+      }
+    },
+    "NSDesktopFolderUsageDescription": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia работает с файлами с Рабочего стола, которые вы бросаете на колесо."
+          }
+        }
+      }
+    },
+    "NSDocumentsFolderUsageDescription": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia работает с файлами из папки «Документы», которые вы бросаете на колесо."
+          }
+        }
+      }
+    },
+    "NSDownloadsFolderUsageDescription": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia работает с файлами из папки «Загрузки», которые вы бросаете на колесо."
+          }
+        }
+      }
+    },
+    "NSNetworkVolumesUsageDescription": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia работает с файлами с сетевых дисков, которые вы бросаете на колесо."
+          }
+        }
+      }
+    },
+    "NSRemovableVolumesUsageDescription": {
+      "extractionState": "extracted_with_value",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia работает с файлами с внешних дисков, которые вы бросаете на колесо."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

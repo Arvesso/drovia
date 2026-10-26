@@ -1061,6 +1061,16 @@
         }
       }
     },
+    "Corners": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Углы"
+          }
+        }
+      }
+    },
     "Couldn't find a subject to cut out": {
       "localizations": {
         "ru": {
@@ -2143,6 +2153,16 @@
         }
       }
     },
+    "Padding": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отступ"
+          }
+        }
+      }
+    },
     "Paste them in Finder": {
       "localizations": {
         "ru": {
@@ -2689,6 +2709,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Настройки…"
+          }
+        }
+      }
+    },
+    "Shadow": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тень"
           }
         }
       }
