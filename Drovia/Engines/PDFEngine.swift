@@ -59,6 +59,10 @@ enum PDFEngine {
     /// Combines PDFs and images, in order, into one PDF.
     static func merge(_ urls: [URL], to destination: URL) throws {
         let merged = PDFDocument()
+        // Images go on pages the size of the PDFs they're merged with (A4 if there are none), turned to suit
+        // the image. At its own size, a 4032 px photo tagged 72 dpi would make a page over a meter wide.
+        let pageSize = try urls.first { UTType(filenameExtension: $0.pathExtension)?.conforms(to: .pdf) == true }
+            .flatMap { try open($0).page(at: 0)?.bounds(for: .mediaBox).size } ?? DocumentEngine.a4
         for url in urls {
             if UTType(filenameExtension: url.pathExtension)?.conforms(to: .pdf) == true {
                 let document = try open(url)
@@ -68,7 +72,12 @@ enum PDFEngine {
                     }
                 }
             } else {
-                guard let image = NSImage(contentsOf: url), let page = PDFPage(image: image) else {
+                guard let image = NSImage(contentsOf: url) else { throw PDFEngineError.unreadable(url) }
+                let long = max(pageSize.width, pageSize.height), short = min(pageSize.width, pageSize.height)
+                let box = image.size.width > image.size.height
+                    ? CGRect(x: 0, y: 0, width: long, height: short) : CGRect(x: 0, y: 0, width: short, height: long)
+                // Fitted and centered on the page; small images aren't blown up.
+                guard let page = PDFPage(image: image, options: [.mediaBox: NSValue(rect: box)]) else {
                     throw PDFEngineError.unreadable(url)
                 }
                 merged.insert(page, at: merged.pageCount)
@@ -112,10 +121,16 @@ enum PDFEngine {
         try write(document, to: destination)
     }
 
-    /// Clears title, author, creator and the other document attributes.
+    /// Clears title, author, creator and the other document attributes, and who wrote each comment and when.
     static func removeMetadata(_ url: URL, to destination: URL) throws {
         let document = try open(url)
         document.documentAttributes = [:]
+        for index in 0 ..< document.pageCount {
+            for annotation in document.page(at: index)?.annotations ?? [] {
+                annotation.userName = nil
+                annotation.modificationDate = nil
+            }
+        }
         try write(document, to: destination)
     }
 

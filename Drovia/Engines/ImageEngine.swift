@@ -7,6 +7,7 @@ enum ImageEngineError: LocalizedError {
     case unreadable(URL)
     case cannotWrite(ImageFormat)
     case tooLarge(ImageFormat, maxSide: Int)
+    case severalFrames(URL)
 
     var errorDescription: String? {
         switch self {
@@ -16,6 +17,8 @@ enum ImageEngineError: LocalizedError {
             String(localized: "Can't write \(format.title)")
         case let .tooLarge(format, maxSide):
             String(localized: "\(format.title) images can't be larger than \(maxSide) px")
+        case let .severalFrames(url):
+            String(localized: "\(url.lastPathComponent) is animated or has several pages; only PDF keeps them all")
         }
     }
 }
@@ -34,9 +37,29 @@ enum ImageEngine {
     /// Re-encodes `source` as `format`, optionally downscaling.
     static func write(_ source: URL, as format: ImageFormat, to destination: URL, options: ImageWriteOptions) throws {
         let image = try SourceImage(url: source)
-        let pixels = try image.orientedPixels(maxPixelSize: options.maxPixelSize)
         let properties = options.keepsMetadata ? image.metadataWithoutOrientation : [:]
+        if image.hasSeveralFrames {
+            // Other formats would silently keep only the first frame or page.
+            guard format == .pdf else { throw ImageEngineError.severalFrames(source) }
+            try writePages(of: image, to: destination, maxPixelSize: options.maxPixelSize)
+            return
+        }
+        let pixels = try image.orientedPixels(maxPixelSize: options.maxPixelSize)
         try encode(pixels, properties: properties, as: format, to: destination, quality: options.quality)
+    }
+
+    /// Every frame of an animated image or page of a multi-page TIFF, as the pages of a PDF.
+    private static func writePages(of image: SourceImage, to destination: URL, maxPixelSize: Int?) throws {
+        let count = CGImageSourceGetCount(image.source)
+        guard let target = CGImageDestinationCreateWithURL(
+            destination as CFURL, UTType.pdf.identifier as CFString, count, nil
+        ) else {
+            throw ImageEngineError.cannotWrite(.pdf)
+        }
+        for index in 0 ..< count {
+            try CGImageDestinationAddImage(target, image.orientedPixels(at: index, maxPixelSize: maxPixelSize), nil)
+        }
+        guard CGImageDestinationFinalize(target) else { throw ImageEngineError.cannotWrite(.pdf) }
     }
 
     /// Removes metadata without re-encoding pixels when the format allows it. Orientation is always kept.
@@ -53,6 +76,12 @@ enum ImageEngine {
             options[kCGImageDestinationMetadata] = metadata
             options[kCGImageDestinationMergeMetadata] = false
         case .location:
+            // GPS, plus the place names IPTC and XMP keep (city, country…), which also say where it was taken.
+            let metadata = CGImageMetadataCreateMutable()
+            for key in locationIPTCKeys {
+                CGImageMetadataSetValueMatchingImageProperty(metadata, kCGImagePropertyIPTCDictionary, key, kCFNull)
+            }
+            options[kCGImageDestinationMetadata] = metadata
             options[kCGImageDestinationMergeMetadata] = true
             options[kCGImageMetadataShouldExcludeGPS] = true
         }
@@ -61,10 +90,28 @@ enum ImageEngine {
             return
         }
 
-        // Fallback: re-encode at high quality with the filtered properties.
+        // Fallback: re-encode with the filtered properties.
+        guard !image.hasSeveralFrames else { throw ImageEngineError.severalFrames(source) }
         var properties = mode == .all ? [:] : image.metadataWithoutOrientation
         properties.removeValue(forKey: kCGImagePropertyGPSDictionary)
-        try encode(image.orientedPixels(), properties: properties, as: format, to: destination, quality: 0.95)
+        if var iptc = properties[kCGImagePropertyIPTCDictionary] as? [CFString: Any] {
+            locationIPTCKeys.forEach { iptc.removeValue(forKey: $0) }
+            properties[kCGImagePropertyIPTCDictionary] = iptc
+        }
+        try encode(
+            image.orientedPixels(),
+            properties: properties,
+            as: format,
+            to: destination,
+            quality: format.reencodeQuality
+        )
+    }
+
+    private static var locationIPTCKeys: [CFString] {
+        [
+            kCGImagePropertyIPTCCity, kCGImagePropertyIPTCSubLocation, kCGImagePropertyIPTCProvinceState,
+            kCGImagePropertyIPTCCountryPrimaryLocationName, kCGImagePropertyIPTCCountryPrimaryLocationCode,
+        ]
     }
 
     /// Rotates 90° clockwise. JPEG, HEIC and TIFF only change their orientation tag, so no quality is lost.
@@ -81,8 +128,15 @@ enum ImageEngine {
         ) {
             return
         }
+        guard !image.hasSeveralFrames else { throw ImageEngineError.severalFrames(source) }
         let rotated = try rotate(image.orientedPixels())
-        try encode(rotated, properties: image.metadataWithoutOrientation, as: format, to: destination, quality: 0.95)
+        try encode(
+            rotated,
+            properties: image.metadataWithoutOrientation,
+            as: format,
+            to: destination,
+            quality: format.reencodeQuality
+        )
     }
 
     /// Decoded pixels as displayed (orientation applied), optionally downscaled.
@@ -107,7 +161,8 @@ enum ImageEngine {
         let image = format.supportsAlpha ? image : try flattened(image)
         switch format {
         case .webp:
-            try WebPEncoder.encode(image, quality: quality).write(to: destination, options: .atomic)
+            try WebPEncoder.encode(image, quality: quality, lossless: quality >= 1)
+                .write(to: destination, options: .atomic)
         case .icns:
             try writeICNS(image, to: destination)
         default:
@@ -119,6 +174,12 @@ enum ImageEngine {
             var properties = properties
             if format.isLossy {
                 properties[kCGImageDestinationLossyCompressionQuality] = quality
+            }
+            if format == .tiff {
+                // ImageIO writes TIFF uncompressed by default, often larger than the source.
+                var tiff = properties[kCGImagePropertyTIFFDictionary] as? [CFString: Any] ?? [:]
+                tiff[kCGImagePropertyTIFFCompression] = 5 // LZW
+                properties[kCGImagePropertyTIFFDictionary] = tiff
             }
             CGImageDestinationAddImage(target, image, properties as CFDictionary)
             guard CGImageDestinationFinalize(target) else { throw ImageEngineError.cannotWrite(format) }
@@ -155,10 +216,18 @@ enum ImageEngine {
 
     // MARK: - Pixel operations
 
-    private static func context(width: Int, height: Int, opaque: Bool = false) throws -> CGContext {
+    /// A context for redrawing `image`: wide-gamut (Display P3) and 16-bit images keep their color space and
+    /// depth, which an 8-bit sRGB context would clip and band.
+    private static func context(
+        width: Int,
+        height: Int,
+        opaque: Bool = false,
+        like image: CGImage
+    ) throws -> CGContext {
+        let space = image.colorSpace.flatMap { $0.model == .rgb ? $0 : nil } ?? CGColorSpace(name: CGColorSpace.sRGB)!
         guard let context = CGContext(
-            data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
-            space: CGColorSpace(name: CGColorSpace.sRGB)!,
+            data: nil, width: width, height: height, bitsPerComponent: image.bitsPerComponent > 8 ? 16 : 8,
+            bytesPerRow: 0, space: space,
             bitmapInfo: opaque ? CGImageAlphaInfo.noneSkipLast.rawValue : CGImageAlphaInfo.premultipliedLast.rawValue
         ) else {
             throw ImageEngineError.cannotWrite(.png)
@@ -170,7 +239,7 @@ enum ImageEngine {
     /// Composites transparent images onto white for formats without alpha.
     private static func flattened(_ image: CGImage) throws -> CGImage {
         guard image.hasAlpha else { return image }
-        let context = try context(width: image.width, height: image.height, opaque: true)
+        let context = try context(width: image.width, height: image.height, opaque: true, like: image)
         let rect = CGRect(x: 0, y: 0, width: image.width, height: image.height)
         context.setFillColor(CGColor(gray: 1, alpha: 1))
         context.fill(rect)
@@ -179,7 +248,7 @@ enum ImageEngine {
     }
 
     private static func rotate(_ image: CGImage) throws -> CGImage {
-        let context = try context(width: image.height, height: image.width)
+        let context = try context(width: image.height, height: image.width, like: image)
         // Rotate the coordinate system 90° clockwise (y axis points up in Core Graphics).
         context.translateBy(x: 0, y: CGFloat(image.width))
         context.rotate(by: -.pi / 2)
@@ -188,7 +257,7 @@ enum ImageEngine {
     }
 
     private static func fitted(_ image: CGImage, inSquare side: Int) throws -> CGImage {
-        let context = try context(width: side, height: side)
+        let context = try context(width: side, height: side, like: image)
         let scale = CGFloat(side) / CGFloat(max(image.width, image.height))
         let width = CGFloat(image.width) * scale
         let height = CGFloat(image.height) * scale
@@ -222,6 +291,13 @@ private struct SourceImage {
         properties = CGImageSourceCopyPropertiesAtIndex(source, index, nil) as? [CFString: Any] ?? [:]
     }
 
+    /// Animated GIF/PNG/WebP/HEICS, or a multi-page TIFF. Other formats' extra images (JPEG's multi-picture
+    /// previews) aren't frames of the picture.
+    var hasSeveralFrames: Bool {
+        CGImageSourceGetCount(source) > 1
+            && [UTType.gif, .png, .webP, .tiff, UTType("public.heics")].contains { $0.map(type.conforms) == true }
+    }
+
     var orientation: CGImagePropertyOrientation {
         (properties[kCGImagePropertyOrientation] as? UInt32).flatMap(CGImagePropertyOrientation.init) ?? .up
     }
@@ -250,20 +326,33 @@ private struct SourceImage {
             tiff[kCGImagePropertyTIFFOrientation] = 1
             metadata[kCGImagePropertyTIFFDictionary] = tiff
         }
+        // EXIF's pixel size would be wrong after resizing or turning; ImageIO writes the real one.
+        if var exif = metadata[kCGImagePropertyExifDictionary] as? [CFString: Any] {
+            exif.removeValue(forKey: kCGImagePropertyExifPixelXDimension)
+            exif.removeValue(forKey: kCGImagePropertyExifPixelYDimension)
+            metadata[kCGImagePropertyExifDictionary] = exif
+        }
+        // Resolution, so a 144 dpi Retina screenshot doesn't come out twice as large in print and layouts.
+        metadata[kCGImagePropertyDPIWidth] = properties[kCGImagePropertyDPIWidth]
+        metadata[kCGImagePropertyDPIHeight] = properties[kCGImagePropertyDPIHeight]
         metadata[kCGImagePropertyOrientation] = 1
         return metadata
     }
 
     /// Full-resolution (or downscaled) pixels with orientation applied.
-    func orientedPixels(maxPixelSize: Int? = nil) throws -> CGImage {
-        let fullSize = Int(max(pixelSize.width, pixelSize.height))
+    func orientedPixels(at frame: Int? = nil, maxPixelSize: Int? = nil) throws -> CGImage {
+        let index = frame ?? CGImageSourceGetPrimaryImageIndex(source)
+        let frameProperties = CGImageSourceCopyPropertiesAtIndex(source, index, nil) as? [CFString: Any] ?? properties
+        let fullSize = max(
+            frameProperties[kCGImagePropertyPixelWidth] as? Int ?? 0,
+            frameProperties[kCGImagePropertyPixelHeight] as? Int ?? 0
+        )
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceShouldCacheImmediately: true,
             kCGImageSourceThumbnailMaxPixelSize: min(maxPixelSize ?? fullSize, fullSize),
         ]
-        let index = CGImageSourceGetPrimaryImageIndex(source)
         return try CGImageSourceCreateThumbnailAtIndex(source, index, options as CFDictionary)
             .orThrow(ImageEngineError.cannotWrite(.png))
     }

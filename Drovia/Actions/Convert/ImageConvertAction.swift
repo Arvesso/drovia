@@ -37,6 +37,8 @@ struct ImageConvertAction: DroviaAction {
             keepsMetadata: context.settings.keepsMetadataOnConvert
         )
         return await context.processEach(files) { source in
+            // In a mixed drop, files already in this format are left alone rather than copied.
+            guard ImageFormat(type: FileType.of(source)) != format else { return nil }
             let destination = await planner.destination(for: source, action: nil, fileExtension: format.fileExtension)
             try ImageEngine.write(source, as: format, to: destination, options: options)
             return destination

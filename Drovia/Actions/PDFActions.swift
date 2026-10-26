@@ -1,4 +1,5 @@
 import Foundation
+import ImageIO
 import UniformTypeIdentifiers
 
 private func allPDFs(_ types: [UTType]) -> Bool {
@@ -8,6 +9,12 @@ private func allPDFs(_ types: [UTType]) -> Bool {
 // MARK: - Convert
 
 /// PDF pages to images, or the whole document to text.
+/// Pages are rendered at twice their point size (144 dpi); saying so keeps them at the page's size when
+/// placed in a layout or printed, instead of twice as large.
+private var renderedPageProperties: [CFString: Any] {
+    [kCGImagePropertyDPIWidth: 144, kCGImagePropertyDPIHeight: 144]
+}
+
 struct PDFConvertAction: DroviaAction {
     enum Target: String, CaseIterable {
         case png, jpeg, tiff, text
@@ -62,8 +69,17 @@ struct PDFConvertAction: DroviaAction {
         let quality = context.settings.imageQuality
         return await context.processEach(files) { source in
             guard let format = target.imageFormat else {
+                let text = try PDFEngine.text(of: source)
+                // A scan has no text layer; an empty file reported as a success would hide that.
+                guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                    throw ActionError(
+                        String(
+                            localized: "\(source.lastPathComponent) has no text. Use Text on the Tools wheel to read a scan."
+                        )
+                    )
+                }
                 let destination = await planner.destination(for: source, action: nil, fileExtension: "txt")
-                try PDFEngine.text(of: source).write(to: destination, atomically: true, encoding: .utf8)
+                try text.write(to: destination, atomically: true, encoding: .utf8)
                 return destination
             }
             let pages = try PDFEngine.pageCount(of: source)
@@ -76,7 +92,7 @@ struct PDFConvertAction: DroviaAction {
                 )
                 try ImageEngine.encode(
                     PDFEngine.renderPage(0, of: source),
-                    properties: [:],
+                    properties: renderedPageProperties,
                     as: format,
                     to: destination,
                     quality: quality
@@ -96,7 +112,7 @@ struct PDFConvertAction: DroviaAction {
                     ))
                     try ImageEngine.encode(
                         PDFEngine.renderPage(index, of: source),
-                        properties: [:],
+                        properties: renderedPageProperties,
                         as: format,
                         to: file,
                         quality: quality

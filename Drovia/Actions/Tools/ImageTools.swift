@@ -53,6 +53,10 @@ struct CompressAction: DroviaAction {
         }
         if result.outputs.isEmpty, result.failures.isEmpty {
             result.message = String(localized: "Already as small as it gets")
+            // PNG and BMP have no quality setting: only fewer pixels or another format makes them smaller.
+            if options.maxPixelSize == nil, files.contains(where: { !outputFormat(for: $0).isLossy }) {
+                result.detail = String(localized: "Convert to WebP or JPEG, or set a maximum size in Settings")
+            }
         }
         return result
     }
