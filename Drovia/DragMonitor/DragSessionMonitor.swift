@@ -35,6 +35,7 @@ final class DragSessionMonitor {
     private var pendingChangeCount: Int?
     private var emptyReads = 0
     private var releasedReadings = 0
+    private var isInternalDragActive = false
 
     func start() {
         guard monitors.isEmpty else { return }
@@ -65,9 +66,14 @@ final class DragSessionMonitor {
         finishPress()
     }
 
-    /// Call after Drovia itself wrote the drag pasteboard (dragging from the shelf), which global monitors
-    /// don't see, so that drag isn't mistaken for a new one later.
-    func resynchronize() {
+    /// Drovia itself is running a drag (from the shelf or onboarding). Global monitors don't see it, but the
+    /// fallback timer does, and the pasteboard it writes must not be taken for a drag from another app.
+    func beginInternalDrag() {
+        isInternalDragActive = true
+    }
+
+    func endInternalDrag() {
+        isInternalDragActive = false
         settledChangeCount = pasteboard.changeCount
     }
 
@@ -111,7 +117,7 @@ final class DragSessionMonitor {
             return
         }
         releasedReadings = 0
-        guard !isDragging else { return }
+        guard !isDragging, !isInternalDragActive else { return }
 
         let changeCount = pasteboard.changeCount
         guard changeCount != settledChangeCount, changeCount != rejectedChangeCount else { return }
@@ -146,6 +152,8 @@ final class DragSessionMonitor {
             self.activity = nil
         }
         settledChangeCount = pasteboard.changeCount
+        // Once the button is up our own drag is over too, even if its end was never reported.
+        isInternalDragActive = false
         guard isDragging else { return }
         isDragging = false
         Logger.drag.debug("Drag ended")

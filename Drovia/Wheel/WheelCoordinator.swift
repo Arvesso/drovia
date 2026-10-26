@@ -71,11 +71,12 @@ final class WheelCoordinator {
     /// A drag started by Drovia itself (from the shelf), which global monitors don't report.
     /// Files on the shelf were put there by the user, so they're always allowed.
     func beginInternalDrag(with urls: [URL]) {
+        dragMonitor.beginInternalDrag()
         dragStarted(with: DragContent(fileURLs: urls), trusted: true)
     }
 
     func endInternalDrag() {
-        dragMonitor.resynchronize()
+        dragMonitor.endInternalDrag()
         dragEnded()
     }
 

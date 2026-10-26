@@ -30,34 +30,11 @@ enum RecipeScripts {
 
     @discardableResult
     private static func execute(_ tool: String, _ arguments: [String], directory: URL? = nil) async throws -> String {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: tool)
-        process.arguments = arguments
-        if let directory {
-            process.currentDirectoryURL = directory
+        let result = try await Subprocess.run(tool, arguments, directory: directory)
+        guard result.status == 0 else {
+            throw Failure(errorDescription: result.errorMessage
+                ?? "\((tool as NSString).lastPathComponent) exited with \(result.status)")
         }
-        let output = Pipe()
-        let errors = Pipe()
-        process.standardOutput = output
-        process.standardError = errors
-        return try await withCheckedThrowingContinuation { continuation in
-            process.terminationHandler = { process in
-                let text = String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
-                guard process.terminationStatus == 0 else {
-                    let message = String(data: errors.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                    continuation.resume(throwing: Failure(errorDescription: message?.isEmpty == false
-                            ? message :
-                            "\((tool as NSString).lastPathComponent) exited with \(process.terminationStatus)"))
-                    return
-                }
-                continuation.resume(returning: text)
-            }
-            do {
-                try process.run()
-            } catch {
-                continuation.resume(throwing: error)
-            }
-        }
+        return String(decoding: result.standardOutput, as: UTF8.self)
     }
 }

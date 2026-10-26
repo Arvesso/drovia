@@ -51,6 +51,36 @@ struct RecipeTests {
         #expect(try ImageEngine.pixelSize(of: output) == CGSize(width: 200, height: 100))
     }
 
+    @Test func keepsIntermediateResultWhenLastStepChangesNothing() async throws {
+        let source = try png()
+        // A plain image has nothing to redact, so the last step hands back the JPEG from the temporary folder.
+        let recipe = Recipe(name: "Private JPEG", symbol: "eye.slash", steps: [
+            .action(sectorID: "convert.jpeg"), .action(sectorID: "tools.redact"),
+        ])
+        let result = try await RecipeAction(recipe: recipe).perform([source], context: context())
+        let output = try #require(result.outputs.first)
+        #expect(FileManager.default.fileExists(atPath: output.path))
+        #expect(output.deletingLastPathComponent().standardizedFileURL == folder.url.standardizedFileURL)
+        #expect(output.lastPathComponent == "photo-private-jpeg.jpg")
+        #expect(result.processed.first?.source == source)
+    }
+
+    @Test func processesRepeatedFileOnce() async throws {
+        let source = try png()
+        let recipe = Recipe(name: "Small", symbol: "star", steps: [.action(sectorID: "tools.resize")])
+        let result = try await RecipeAction(recipe: recipe).perform([source, source], context: context())
+        #expect(result.outputs.count == 1)
+    }
+
+    @Test(.timeLimit(.minutes(1))) func scriptWithLotsOfOutputFinishes() async throws {
+        // More than a pipe buffer on both streams.
+        let recipe = Recipe(name: "Chatty", symbol: "terminal", steps: [
+            .script("head -c 200000 /dev/zero; head -c 200000 /dev/zero >&2"),
+        ])
+        let result = try await RecipeAction(recipe: recipe).perform([png()], context: context())
+        #expect(result.failures.isEmpty)
+    }
+
     @Test func supportsFollowsTypeChanges() {
         let recipe = Recipe(
             name: "x",

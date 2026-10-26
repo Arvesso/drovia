@@ -198,7 +198,10 @@ enum MediaEngine {
     ) async throws {
         let asset = AVURLAsset(url: source)
         guard try await !asset.loadTracks(withMediaType: .video).isEmpty else { throw MediaEngineError.noVideo(source) }
-        let duration = try await min(asset.load(.duration).seconds, maxDuration)
+        // Streams and broken files have no usable duration (NaN would crash the frame count below).
+        let length = try await asset.load(.duration)
+        guard length.isNumeric, length.seconds > 0 else { throw MediaEngineError.unsupported(source) }
+        let duration = min(length.seconds, maxDuration)
         let frameCount = max(1, Int(duration * fps))
         let times = (0 ..< frameCount).map { CMTime(seconds: Double($0) / fps, preferredTimescale: 600) }
 
