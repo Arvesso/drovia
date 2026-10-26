@@ -843,6 +843,16 @@
         }
       }
     },
+    "Can't extract %@": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось распаковать %@"
+          }
+        }
+      }
+    },
     "Can't open %@ as a PDF": {
       "localizations": {
         "ru": {
@@ -2965,6 +2975,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Показываются первыми при перемещении, затем — недавние папки."
+          }
+        }
+      }
+    },
+    "Single .xz files can't be extracted": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Одиночные файлы .xz распаковать нельзя"
           }
         }
       }

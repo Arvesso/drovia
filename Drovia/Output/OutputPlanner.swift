@@ -55,3 +55,14 @@ actor OutputPlanner {
         }
     }
 }
+
+/// Runs `work`, which writes `output`. If it fails, whatever it wrote so far is removed, so no half-made
+/// file or folder is left next to the user's files (failed results aren't in history, so undo can't).
+func removingOnFailure<T>(_ output: URL, _ work: () async throws -> T) async throws -> T {
+    do {
+        return try await work()
+    } catch {
+        try? FileManager.default.removeItem(at: output)
+        throw error
+    }
+}

@@ -233,7 +233,9 @@ enum MediaEngine {
             written += 1
             progress(Double(written) / Double(frameCount))
         }
-        guard written > 0, CGImageDestinationFinalize(gif) else { throw ImageEngineError.cannotWrite(.gif) }
+        try await removingOnFailure(destination) {
+            guard written > 0, CGImageDestinationFinalize(gif) else { throw ImageEngineError.cannotWrite(.gif) }
+        }
     }
 
     // MARK: - Audio
@@ -293,19 +295,28 @@ enum MediaEngine {
                 ?? String(localized: "Can't convert \(destination.lastPathComponent)"))
         }
         writer.startSession(atSourceTime: .zero)
-        while let buffer = output.copyNextSampleBuffer() {
-            while !input.isReadyForMoreMediaData {
-                try await Task.sleep(for: .milliseconds(5))
+        // A failed or cancelled conversion leaves no truncated file behind.
+        try await removingOnFailure(destination) {
+            do {
+                while let buffer = output.copyNextSampleBuffer() {
+                    while !input.isReadyForMoreMediaData {
+                        try await Task.sleep(for: .milliseconds(5))
+                    }
+                    guard input.append(buffer) else { break }
+                    if duration > 0 {
+                        progress(min(1, CMSampleBufferGetPresentationTimeStamp(buffer).seconds / duration))
+                    }
+                }
+            } catch {
+                reader.cancelReading()
+                writer.cancelWriting()
+                throw error
             }
-            guard input.append(buffer) else { break }
-            if duration > 0 {
-                progress(min(1, CMSampleBufferGetPresentationTimeStamp(buffer).seconds / duration))
+            input.markAsFinished()
+            await writer.finishWriting()
+            if let error = writer.error ?? reader.error {
+                throw MediaEngineError.exportFailed(error.localizedDescription)
             }
-        }
-        input.markAsFinished()
-        await writer.finishWriting()
-        if let error = writer.error ?? reader.error {
-            throw MediaEngineError.exportFailed(error.localizedDescription)
         }
     }
 
@@ -328,6 +339,8 @@ enum MediaEngine {
             }
         }
         defer { monitor.cancel() }
-        try await session.export(to: destination, as: fileType)
+        try await removingOnFailure(destination) {
+            try await session.export(to: destination, as: fileType)
+        }
     }
 }

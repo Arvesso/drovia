@@ -22,21 +22,20 @@ struct MoveAction: DroviaAction {
         guard let folder = await chooseDestination(settings: context.settings) else { throw CancellationError() }
         context.settings.noteMoveDestination(folder.path)
 
-        var result = ActionResult()
-        for file in files {
-            do {
-                let fileName = NamingTemplate.uniqueFileName(
-                    base: file.deletingPathExtension().lastPathComponent,
-                    fileExtension: file.pathExtension
-                ) { FileManager.default.fileExists(atPath: folder.appendingPathComponent($0).path) }
-                let destination = folder.appendingPathComponent(fileName)
-                try FileManager.default.moveItem(at: file, to: destination)
-                result.processed.append(ProcessedFile(source: file, output: destination))
-                result.undo.append(.moveBack(from: destination, to: file))
-            } catch {
-                result.failures.append(ActionFailure(file: file, message: error.localizedDescription))
-            }
+        // Off the main thread and one at a time: a move to another disk is a full copy, and files with the
+        // same name must get distinct free names.
+        var result = await context.processEach(files, concurrency: 1) { file, _ in
+            // Already there: "moving" it would only rename it to "name 2".
+            guard file.deletingLastPathComponent().standardizedFileURL != folder.standardizedFileURL else { return nil }
+            let fileName = NamingTemplate.uniqueFileName(
+                base: file.deletingPathExtension().lastPathComponent,
+                fileExtension: file.pathExtension
+            ) { FileManager.default.fileExists(atPath: folder.appendingPathComponent($0).path) }
+            let destination = folder.appendingPathComponent(fileName)
+            try FileManager.default.moveItem(at: file, to: destination)
+            return destination
         }
+        result.undo = result.processed.compactMap { file in file.output.map { .moveBack(from: $0, to: file.source) } }
         result.message = String(localized: "Moved \(result.outputs.count) files")
         result.detail = (folder.path as NSString).abbreviatingWithTildeInPath
         return result
