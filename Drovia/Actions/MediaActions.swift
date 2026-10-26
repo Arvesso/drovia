@@ -1,4 +1,5 @@
 import AVFoundation
+import Synchronization
 import UniformTypeIdentifiers
 
 /// Video exports are heavy; two at a time keeps the Mac responsive.
@@ -8,8 +9,14 @@ private func allVideos(_ types: [UTType]) -> Bool {
     !types.isEmpty && types.allSatisfy(MediaEngine.isVideo)
 }
 
+/// The container for a rewrapped video (mute, rotate): MP4 and M4V sources keep theirs; anything else
+/// (AVI, MTS, 3GP, whose codecs MP4 may not hold) goes into a QuickTime movie, which holds them all.
 private func videoFileType(for file: URL) -> (AVFileType, String) {
-    file.pathExtension.lowercased() == "mov" ? (.mov, "mov") : (.mp4, "mp4")
+    switch file.pathExtension.lowercased() {
+    case "mp4": (.mp4, "mp4")
+    case "m4v": (.m4v, "m4v")
+    default: (.mov, "mov")
+    }
 }
 
 // MARK: - Convert
@@ -58,7 +65,8 @@ struct VideoConvertAction: DroviaAction {
         let planner = context.planner
         let target = target
         let gifWidth = context.settings.gifWidth
-        return await context.processEach(files, concurrency: mediaConcurrency) { source, progress in
+        let cutShort = Mutex(0)
+        var result = await context.processEach(files, concurrency: mediaConcurrency) { source, progress in
             let destination = await planner.destination(for: source, action: nil, fileExtension: target.rawValue)
             switch target {
             case .mp4:
@@ -66,10 +74,19 @@ struct VideoConvertAction: DroviaAction {
             case .mov:
                 try await MediaEngine.convert(source, to: .mov, destination: destination, progress: progress)
             case .gif:
-                try await MediaEngine.makeGIF(source, destination: destination, width: gifWidth, progress: progress)
+                if try await MediaEngine
+                    .makeGIF(source, destination: destination, width: gifWidth, progress: progress)
+                {
+                    cutShort.withLock { $0 += 1 }
+                }
             }
             return destination
         }
+        // Long videos become GIFs of their first 30 seconds; say so rather than leave it to be noticed.
+        if cutShort.withLock({ $0 }) > 0 {
+            result.detail = String(localized: "GIFs cover the first 30 seconds")
+        }
+        return result
     }
 }
 
