@@ -86,20 +86,22 @@ struct PDFConvertAction: DroviaAction {
             let folder = await planner.destination(for: source, action: nil, fileExtension: "")
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
             let name = source.deletingPathExtension().lastPathComponent
-            for index in 0 ..< pages {
-                let file = folder.appendingPathComponent(PDFEngine.pageFileName(
-                    name,
-                    index,
-                    of: pages,
-                    ext: format.fileExtension
-                ))
-                try ImageEngine.encode(
-                    PDFEngine.renderPage(index, of: source),
-                    properties: [:],
-                    as: format,
-                    to: file,
-                    quality: quality
-                )
+            try await removingOnFailure(folder) {
+                for index in 0 ..< pages {
+                    let file = folder.appendingPathComponent(PDFEngine.pageFileName(
+                        name,
+                        index,
+                        of: pages,
+                        ext: format.fileExtension
+                    ))
+                    try ImageEngine.encode(
+                        PDFEngine.renderPage(index, of: source),
+                        properties: [:],
+                        as: format,
+                        to: file,
+                        quality: quality
+                    )
+                }
             }
             return folder
         }
@@ -161,7 +163,7 @@ struct PDFSplitAction: DroviaAction {
         return await context.processEach(files) { source in
             let folder = await planner.destination(for: source, action: "pages", fileExtension: "")
             try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
-            _ = try PDFEngine.split(source, into: folder)
+            _ = try await removingOnFailure(folder) { try PDFEngine.split(source, into: folder) }
             return folder
         }
     }

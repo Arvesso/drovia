@@ -108,6 +108,42 @@ struct ArchiveEngineTests {
         #expect(FileManager.default.fileExists(atPath: extracted.appendingPathComponent("one.txt").path))
     }
 
+    @Test func extractsSingleCompressedFile() async throws {
+        let text = try makeFile("notes.txt")
+        let gzip = Process()
+        gzip.executableURL = URL(fileURLWithPath: "/usr/bin/gzip")
+        gzip.arguments = [text.path]
+        try gzip.run()
+        gzip.waitUntilExit()
+        let archive = folder.url.appendingPathComponent("notes.txt.gz")
+        #expect(!FileManager.default.fileExists(atPath: text.path))
+
+        let extracted = try await ArchiveEngine.extract(archive, into: folder.url.appendingPathComponent("notes.txt"))
+        #expect(extracted.lastPathComponent == "notes.txt")
+        #expect(try String(contentsOf: extracted, encoding: .utf8) == "notes.txt")
+    }
+
+    @Test func failedExtractionLeavesNoFolder() async throws {
+        let archive = try makeFile("broken.zip")
+        let target = folder.url.appendingPathComponent("broken")
+        await #expect(throws: (any Error).self) { _ = try await ArchiveEngine.extract(archive, into: target) }
+        #expect(!FileManager.default.fileExists(atPath: target.path))
+    }
+
+    @MainActor @Test func diskImagesAndPackagesAreZippedNotExtracted() throws {
+        for fileExtension in ["dmg", "iso", "pkg", "aar"] {
+            let type = try #require(UTType(filenameExtension: fileExtension))
+            #expect(!ArchiveEngine.isExtractable(type), "\(fileExtension)")
+            #expect(ZipAction().supports([type]), "\(fileExtension)")
+        }
+        for fileExtension in ["zip", "gz", "tgz", "bz2", "xz", "tar", "7z", "rar"] {
+            #expect(
+                try ArchiveEngine.isExtractable(#require(UTType(filenameExtension: fileExtension))),
+                "\(fileExtension)"
+            )
+        }
+    }
+
     @Test func sha256MatchesKnownValue() throws {
         let file = folder.url.appendingPathComponent("abc.txt")
         try Data("abc".utf8).write(to: file)
