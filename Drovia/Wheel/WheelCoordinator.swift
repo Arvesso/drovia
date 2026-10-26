@@ -147,6 +147,10 @@ final class WheelCoordinator {
             recipes: settings.recipes
         )
         guard !actions.isEmpty else {
+            // The previous wheel would otherwise stay up and accept a drop meant for this one.
+            if isWheelShown {
+                hideWheelImmediately()
+            }
             warnOnce(
                 kind.emptyMessage,
                 detail: kind == .recipes ? String(localized: "Create one in Settings → Recipes") : nil,
@@ -160,6 +164,9 @@ final class WheelCoordinator {
             model.kind = kind
             model.items = items
             model.highlighted = nil
+            if isWheelShown {
+                panel.update(geometry: model.geometry)
+            }
         }
         guard !isWheelShown else { return }
         let delay = settings.activationDelay
@@ -329,7 +336,15 @@ final class WheelCoordinator {
         )
         .map(\.wheelItem)
         model.highlighted = model.items.isEmpty ? nil : 0
+        // Another wheel can have more sectors and so a bigger ring.
+        panel.update(geometry: model.geometry)
     }
+
+    /// Key codes of 1–9 on the number row and the keypad.
+    private static let digitKeys: [UInt16: Int] = [
+        18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9,
+        83: 1, 84: 2, 85: 3, 86: 4, 87: 5, 88: 6, 89: 7, 91: 8, 92: 9,
+    ]
 
     private func handleKey(_ event: NSEvent) -> Bool {
         guard model.isKeyboardMode else { return false }
@@ -351,7 +366,8 @@ final class WheelCoordinator {
                 runKeyboardSelection(index)
             }
         default:
-            guard let digit = event.charactersIgnoringModifiers.flatMap(Int.init), (1 ... count).contains(digit) else {
+            // By key position, so the number row works on layouts like AZERTY where it types other characters.
+            guard let digit = Self.digitKeys[event.keyCode], digit <= count else {
                 return false
             }
             runKeyboardSelection(digit - 1)
