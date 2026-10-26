@@ -15,8 +15,13 @@ enum ArchiveEngine {
         UTType("org.7-zip.7-zip-archive"), UTType("com.rarlab.rar-archive"), UTType("public.cpio-archive"),
     ].compactMap(\.self)
 
+    /// Formats macOS itself doesn't declare: without an app that does (Keka, The Unarchiver), their files
+    /// get dynamic types, which only carry the extension.
+    private static let undeclaredExtensions: Set = ["7z", "rar", "xz", "txz", "cpio"]
+
     static func isExtractable(_ type: UTType) -> Bool {
         extractableTypes.contains { type.conforms(to: $0) }
+            || type.isDynamic && undeclaredExtensions.contains(type.preferredFilenameExtension?.lowercased() ?? "")
     }
 
     /// Zips files with Finder-compatible metadata. Several items from different folders are
