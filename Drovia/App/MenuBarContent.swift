@@ -8,7 +8,7 @@ struct MenuBarContent: View {
     let runner: ActionRunner
 
     var body: some View {
-        if folderAccess.folders.isEmpty {
+        if !folderAccess.hasAccess {
             Text("No folders allowed yet")
             OpenSettingsButton("Choose Folders…")
             Divider()

@@ -73,8 +73,10 @@ struct ActionResult {
 
     static let silent = ActionResult(showsConfirmation: false)
 
+    /// Each result once, even when several sources went into it (a zip, a merged PDF).
     var outputs: [URL] {
-        processed.compactMap(\.output)
+        var seen: Set<URL> = []
+        return processed.compactMap(\.output).filter { seen.insert($0).inserted }
     }
 }
 

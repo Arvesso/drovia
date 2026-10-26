@@ -44,13 +44,22 @@ final class FolderAccess {
 
     // MARK: - Queries
 
+    /// Whether Drovia can work anywhere yet: some folders are allowed, or it has Full Disk Access.
+    var hasAccess: Bool {
+        hasFullDiskAccess || !folders.isEmpty
+    }
+
     func allows(_ content: DragContent) -> Bool {
+        // Full Disk Access may have been granted since we last looked; checking is one cheap file test.
+        if !hasFullDiskAccess {
+            refreshFullDiskAccess()
+        }
         // Promised files and raw images are written into our own temporary folder.
-        content.fileURLs.allSatisfy(allows)
+        return content.fileURLs.allSatisfy(allows)
     }
 
     func allows(_ url: URL) -> Bool {
-        folders.contains { FolderScope.contains($0.path, path: url.path) }
+        hasFullDiskAccess || folders.contains { FolderScope.contains($0.path, path: url.path) }
     }
 
     /// Full Disk Access can't be queried directly; reading a file only it unlocks never shows a prompt.
@@ -112,7 +121,7 @@ final class FolderAccess {
 
     private func load() {
         guard let data = defaults.data(forKey: Self.defaultsKey),
-              let stored = try? JSONDecoder().decode([AllowedFolder].self, from: data)
+              let stored = try? JSONDecoder().decode([Lossy<AllowedFolder>].self, from: data).compactMap(\.value)
         else { return }
         folders = stored.map(resolvingBookmark)
         save()

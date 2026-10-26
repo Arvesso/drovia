@@ -28,11 +28,17 @@ actor OutputPlanner {
         let base = action.map { NamingTemplate.render(template, name: name, action: $0) } ?? name
         let fileName = NamingTemplate.uniqueFileName(base: base, fileExtension: fileExtension) { candidate in
             let path = folder.appendingPathComponent(candidate).path
-            return reserved.contains(path) || FileManager.default.fileExists(atPath: path)
+            return reserved.contains(Self.key(path)) || FileManager.default.fileExists(atPath: path)
         }
         let url = folder.appendingPathComponent(fileName)
-        reserved.insert(url.path)
+        reserved.insert(Self.key(url.path))
         return url
+    }
+
+    /// Volumes are usually case-insensitive and ignore Unicode normalization, so "Photo.webp" and
+    /// "photo.webp" are one file there.
+    private static func key(_ path: String) -> String {
+        path.precomposedStringWithCanonicalMapping.lowercased()
     }
 
     private func folder(for source: URL) -> URL {
