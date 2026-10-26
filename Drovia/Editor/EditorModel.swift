@@ -143,8 +143,9 @@ final class EditorModel {
 
     @ObservationIgnored private var undoStack: [Snapshot] = []
     @ObservationIgnored private var redoStack: [Snapshot] = []
-    @ObservationIgnored private var results: [EditedImage] = []
-    @ObservationIgnored var onFinish: (([EditedImage]) -> Void)?
+    /// Takes each finished image right away and writes it, so a batch never piles up full-size bitmaps.
+    @ObservationIgnored var onSave: ((EditedImage) async -> Void)?
+    @ObservationIgnored var onFinish: (() -> Void)?
 
     init(files: [URL], mode: EditorMode, redaction: RedactionStyle) {
         self.files = files
@@ -386,7 +387,7 @@ final class EditorModel {
                         redaction: redaction
                     )
                 }.value
-                results.append(EditedImage(source: file, image: edited))
+                await onSave?(EditedImage(source: file, image: edited))
             } catch {
                 // Stop at the file that failed and show it, rather than leaving it out without a word.
                 load()
@@ -398,14 +399,15 @@ final class EditorModel {
         finish()
     }
 
-    /// Renders the current image into the results. On failure the error is shown and nothing is kept.
+    /// Renders the current image and hands it to `onSave`. On failure the error is shown and nothing is kept.
     private func saveCurrent() async -> Bool {
         guard let image, !isSaving else { return false }
         isSaving = true
         defer { isSaving = false }
         commitText()
         do {
-            try await results.append(EditedImage(source: source, image: render(source: image, outputScale: 1)))
+            let edited = try await render(source: image, outputScale: 1)
+            await onSave?(EditedImage(source: source, image: edited))
             return true
         } catch {
             loadError = error.localizedDescription
@@ -420,7 +422,7 @@ final class EditorModel {
     func finish() {
         let callback = onFinish
         onFinish = nil
-        callback?(results)
+        callback?()
     }
 
     private func advance() {

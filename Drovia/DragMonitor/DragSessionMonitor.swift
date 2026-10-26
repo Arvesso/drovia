@@ -54,6 +54,8 @@ final class DragSessionMonitor {
                 }
             }
         }
+        // It runs for the app's whole life; letting macOS coalesce it saves wakeups while idle.
+        fallback.tolerance = 0.5
         RunLoop.main.add(fallback, forMode: .common)
         fallbackTimer = fallback
     }

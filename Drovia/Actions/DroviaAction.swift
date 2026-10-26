@@ -88,6 +88,14 @@ struct ActionContext {
     let shelf: ShelfController
     let reportProgress: (Double) -> Void
 
+    /// One job per core, but no more than one per 4 GB of memory: a decoded 48 MP photo plus its encoding
+    /// buffers takes about half a gigabyte, and a dozen at once would push smaller Macs into swapping.
+    nonisolated static var defaultConcurrency: Int {
+        let info = ProcessInfo.processInfo
+        let byMemory = Int(info.physicalMemory / (4 << 30))
+        return max(2, min(info.activeProcessorCount - 1, byMemory))
+    }
+
     /// Runs `work` for every file in parallel, reporting progress and collecting failures.
     func processEach(
         _ files: [URL],
@@ -104,7 +112,7 @@ struct ActionContext {
         _ work: @escaping @Sendable (URL, _ progress: @escaping @Sendable (Double) -> Void) async throws -> URL?
     ) async -> ActionResult {
         var result = ActionResult()
-        let limit = concurrency ?? max(2, ProcessInfo.processInfo.activeProcessorCount - 1)
+        let limit = concurrency ?? Self.defaultConcurrency
         let tracker = ProgressTracker(fileCount: files.count, report: reportProgress)
         await withTaskGroup(of: (URL, Result<URL?, any Error>).self) { group in
             var pending = files.enumerated().makeIterator()

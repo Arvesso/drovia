@@ -37,26 +37,30 @@ struct EditImageAction: DroviaAction {
     }
 
     func perform(_ files: [URL], context: ActionContext) async throws -> ActionResult {
-        let edited = await ImageEditor.edit(files, mode: mode, redaction: context.settings.redactionStyle)
-        guard !edited.isEmpty else { throw CancellationError() }
         let quality = max(context.settings.imageQuality, 0.9)
+        let planner = context.planner
         var result = ActionResult()
-        for item in edited {
+        // Each image is written as soon as it's saved in the editor, off the main thread.
+        await ImageEditor.edit(files, mode: mode, redaction: context.settings.redactionStyle) { item in
             do {
                 var format = ImageFormat.output(for: UTType(filenameExtension: item.source.pathExtension) ?? .png)
                 // Rounded corners or a transparent frame need a format with alpha.
                 if !format.supportsAlpha, item.image.hasAlpha {
                     format = .png
                 }
-                let destination = await context.planner.destination(
+                let destination = await planner.destination(
                     for: item.source, action: "edited", fileExtension: format.fileExtension
                 )
-                try ImageEngine.encode(item.image, properties: [:], as: format, to: destination, quality: quality)
+                let image = item.image
+                try await Task.detached(priority: .userInitiated) {
+                    try ImageEngine.encode(image, properties: [:], as: format, to: destination, quality: quality)
+                }.value
                 result.processed.append(ProcessedFile(source: item.source, output: destination))
             } catch {
                 result.failures.append(ActionFailure(file: item.source, message: error.localizedDescription))
             }
         }
+        guard !result.processed.isEmpty || !result.failures.isEmpty else { throw CancellationError() }
         return result
     }
 }

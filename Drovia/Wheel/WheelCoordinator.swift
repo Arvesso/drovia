@@ -29,6 +29,7 @@ final class WheelCoordinator {
     /// The wheel last used from the keyboard, opened first next time.
     private var lastKeyboardKind = WheelKind.convert
     private var thumbnailTask: Task<Void, Never>?
+    private var isReadingFinderSelection = false
     /// Whether the current drag comes only from allowed folders.
     private var isDragAllowed = false
     private var didWarnThisDrag = false
@@ -100,9 +101,14 @@ final class WheelCoordinator {
         model.thumbnail = nil
         model.scale = settings.wheelSize.scale
         thumbnailTask?.cancel()
+        thumbnailTask = nil
         modifierWatcher.start()
-        // Reading a file outside allowed folders could trigger a privacy prompt mid-drag.
-        guard isDragAllowed else { return }
+    }
+
+    /// Most drags never show the wheel, so the preview is only made once a modifier is held.
+    private func loadThumbnailIfNeeded() {
+        guard thumbnailTask == nil else { return }
+        let content = model.content
         thumbnailTask = Task {
             let image = await Thumbnails.image(for: content)
             guard !Task.isCancelled else { return }
@@ -124,6 +130,7 @@ final class WheelCoordinator {
             }
             return
         }
+        // Reading a file outside allowed folders could trigger a privacy prompt mid-drag.
         guard isDragAllowed else {
             warnOnce(
                 String(localized: "This folder isn't allowed"),
@@ -132,6 +139,7 @@ final class WheelCoordinator {
             )
             return
         }
+        loadThumbnailIfNeeded()
         let actions = ActionRegistry.actions(
             for: kind,
             types: model.content.contentTypes,
@@ -231,10 +239,14 @@ final class WheelCoordinator {
     // MARK: - Keyboard
 
     /// Opens the wheel at the pointer for the files selected in Finder.
-    func openForFinderSelection() {
+    func openForFinderSelection() async {
+        // A second press while Finder is still answering the first would open two wheels.
+        guard !isReadingFinderSelection else { return }
+        isReadingFinderSelection = true
+        defer { isReadingFinderSelection = false }
         let urls: [URL]
         do {
-            urls = try FinderSelection.selectedFiles()
+            urls = try await FinderSelection.selectedFiles()
         } catch FinderSelection.Failure.notAllowed {
             toast.show(
                 String(localized: "Drovia can't see Finder's selection"),
