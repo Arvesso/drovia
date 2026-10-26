@@ -80,28 +80,9 @@ enum ArchiveEngine {
     }
 
     private static func run(_ tool: String, _ arguments: [String]) async throws {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: tool)
-        process.arguments = arguments
-        let errors = Pipe()
-        process.standardError = errors
-        process.standardOutput = FileHandle.nullDevice
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            process.terminationHandler = { process in
-                if process.terminationStatus == 0 {
-                    continuation.resume()
-                } else {
-                    let message = String(data: errors.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8)?
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                    continuation.resume(throwing: ToolError(errorDescription: message?.isEmpty == false
-                            ? message : "\(tool) failed (\(process.terminationStatus))"))
-                }
-            }
-            do {
-                try process.run()
-            } catch {
-                continuation.resume(throwing: error)
-            }
+        let result = try await Subprocess.run(tool, arguments)
+        guard result.status == 0 else {
+            throw ToolError(errorDescription: result.errorMessage ?? "\(tool) failed (\(result.status))")
         }
     }
 }

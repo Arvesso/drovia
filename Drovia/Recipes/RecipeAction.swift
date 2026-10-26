@@ -73,12 +73,23 @@ struct RecipeAction: DroviaAction {
         let slug = recipe.name.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber })
             .joined(separator: "-")
 
-        var current = files
+        // The same file passed twice (possible from Shortcuts) is processed once.
+        var seen: Set<URL> = []
+        var current = files.filter { seen.insert($0).inserted }
         // Each current file mapped to the original it came from.
-        var origin = Dictionary(uniqueKeysWithValues: files.map { ($0, $0) })
+        var origin = Dictionary(uniqueKeysWithValues: current.map { ($0, $0) })
         var temporaryFolders: [URL] = []
         defer { temporaryFolders.forEach { try? FileManager.default.removeItem(at: $0) } }
         var result = ActionResult()
+
+        // The final files are named after the recipe: photo-for-the-web.webp.
+        func finalPlanner() -> OutputPlanner {
+            OutputPlanner(
+                location: context.planner.location,
+                template: context.planner.template.replacingOccurrences(of: "{action}", with: slug),
+                originals: origin.filter { $0.key != $0.value }
+            )
+        }
 
         steps: for (index, step) in recipe.steps.enumerated() {
             let stepProgress: (Double) -> Void = { fraction in
@@ -103,13 +114,7 @@ struct RecipeAction: DroviaAction {
                     temporaryFolders.append(folder)
                     planner = OutputPlanner(location: .folder(folder), template: "{name}")
                 } else {
-                    // The final files are named after the recipe: photo-for-the-web.webp.
-                    let template = context.planner.template.replacingOccurrences(of: "{action}", with: slug)
-                    planner = OutputPlanner(
-                        location: context.planner.location,
-                        template: template,
-                        originals: origin.filter { $0.key != $0.value }
-                    )
+                    planner = finalPlanner()
                 }
                 let stepContext = ActionContext(
                     settings: context.settings,
@@ -136,6 +141,21 @@ struct RecipeAction: DroviaAction {
                 if current.isEmpty {
                     break steps
                 }
+            }
+        }
+
+        // A last step that left files alone (already small enough) hands back intermediate files.
+        // Move them to where results go before their temporary folders are deleted.
+        let intermediate = current.filter { file in
+            temporaryFolders.contains { file.path.hasPrefix($0.path + "/") }
+        }
+        if !intermediate.isEmpty {
+            let planner = finalPlanner()
+            for file in intermediate {
+                let destination = await planner.destination(for: file, action: slug, fileExtension: file.pathExtension)
+                try FileManager.default.moveItem(at: file, to: destination)
+                origin[destination] = origin[file]
+                current = current.map { $0 == file ? destination : $0 }
             }
         }
 
