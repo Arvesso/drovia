@@ -4,7 +4,7 @@ Thanks for helping! Bug reports, ideas and pull requests are all welcome.
 
 ## Getting started
 
-1. Install Xcode 26+, then `brew install xcodegen swiftformat`.
+1. Install Xcode 26+, then `brew install xcodegen swiftformat` (SwiftFormat 0.64.4 or later; CI uses 0.64.4).
 2. `make run` builds and launches the app; `make test` runs the tests.
 3. The Xcode project is generated from `project.yml` and isn't committed. After adding or removing files, run `make gen` (the other `make` targets do it for you).
 
