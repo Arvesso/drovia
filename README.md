@@ -14,7 +14,7 @@ Drag any file, hold a modifier key, and drop it onto a wheel. Convert an image t
 
 | Hold | Wheel | For example |
 | --- | --- | --- |
-| ⇧ Shift | **Convert** | PNG, JPEG, WebP, HEIC, AVIF, TIFF, PDF, ICNS · DOCX/RTF/HTML → PDF · MP4, MOV, GIF · M4A, WAV, AIFF |
+| ⇧ Shift | **Convert** | Images ↔ PNG, JPEG, WebP, HEIC, AVIF, TIFF, PDF, ICNS · PDF → PNG, JPEG, TIFF, text · documents ↔ PDF, DOCX, RTF, HTML, TXT · video → MP4, MOV, GIF · audio → M4A, WAV, AIFF |
 | ⌘ Command | **Tools** | Compress, Resize, Crop, Annotate, Add Background, Remove Background, Redact, Text (OCR), Rotate, Metadata, Merge/Split PDF, Mute video, Checksum |
 | ⌃ Control | **Actions** | AirDrop, Float on a shelf, Copy, Move, Copy Path, Zip/Unzip, Terminal, Reveal, Open With |
 | ⌥ Option | **Recipes** | Your own chains, e.g. *Resize → WebP → Remove metadata* |

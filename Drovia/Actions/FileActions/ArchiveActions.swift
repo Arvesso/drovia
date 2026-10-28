@@ -22,7 +22,11 @@ struct ZipAction: DroviaAction {
 
     func perform(_ files: [URL], context: ActionContext) async throws -> ActionResult {
         // Like Finder: one item becomes "<name>.zip" (photo.png.zip), several become "Archive.zip".
-        let base = files.count == 1 ? files[0] : files[0].deletingLastPathComponent().appendingPathComponent("Archive")
+        let base = files.count == 1 ? files[0]
+            : files[0].deletingLastPathComponent().appendingPathComponent(String(
+                localized: "Archive",
+                comment: "File name of a zip made from several files, like Finder's"
+            ))
         let destination = await context.planner.destination(
             for: base.appendingPathExtension("zip"), action: nil, fileExtension: "zip"
         )

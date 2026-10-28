@@ -126,7 +126,11 @@ final class FolderAccess {
               let stored = try? JSONDecoder().decode([Lossy<AllowedFolder>].self, from: data).compactMap(\.value)
         else { return }
         folders = stored.map(resolvingBookmark)
-        save()
+        // Only when a folder moved or its bookmark was renewed. (Unit tests run inside the app, so an
+        // unconditional save rewrote the developer's real settings on every test run.)
+        if folders != stored {
+            save()
+        }
     }
 
     private func resolvingBookmark(_ folder: AllowedFolder) -> AllowedFolder {

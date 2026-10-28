@@ -147,3 +147,21 @@ private final class InMemoryDefaults: UserDefaults {
         values[key] as? Double ?? 0
     }
 }
+
+/// A Trash of its own for a test: files are moved into a folder, as the real Trash does, so undo can put
+/// them back, without filling the user's Trash on every run.
+@MainActor
+final class TestTrash {
+    let folder: URL
+
+    init(in parent: URL) throws {
+        folder = parent.appendingPathComponent("Trash", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    }
+
+    func move(_ url: URL) throws -> URL? {
+        let destination = folder.appendingPathComponent("\(UUID().uuidString)-\(url.lastPathComponent)")
+        try FileManager.default.moveItem(at: url, to: destination)
+        return destination
+    }
+}

@@ -24,11 +24,26 @@ jobs:
         with:
           xcode-version: latest-stable
 
+      # The versions in .swiftformat_version and .xcodegen_version, so CI formats and generates exactly as
+      # contributors do (SwiftFormat versions disagree on some indentation). Update a tool by editing its file.
       - name: Install tools
-        run: brew install xcodegen swiftformat
+        run: |
+          install_release() { # name, version file, release URL with VERSION, path of the binary's folder
+            version=$(tr -d '[:space:]' < "$2")
+            curl -sSfL -o "$RUNNER_TEMP/$1.zip" "${3//VERSION/$version}"
+            unzip -q -o "$RUNNER_TEMP/$1.zip" -d "$RUNNER_TEMP/$1"
+            echo "$RUNNER_TEMP/$1/$4" >> "$GITHUB_PATH"
+          }
+          install_release swiftformat .swiftformat_version \
+            "https://github.com/nicklockwood/SwiftFormat/releases/download/VERSION/swiftformat.zip" .
+          install_release xcodegen .xcodegen_version \
+            "https://github.com/yonaskolb/XcodeGen/releases/download/VERSION/xcodegen.zip" xcodegen/bin
 
       - name: Check formatting
-        run: swiftformat --lint .
+        run: |
+          swiftformat --version
+          xcodegen --version
+          swiftformat --lint .
 
       - name: Test
         run: make test
