@@ -39,6 +39,19 @@ enum UndoError: LocalizedError {
     }
 }
 
+/// Moves a file to the Trash and returns where it went. Tests use a folder of their own instead, so runs
+/// don't fill the user's Trash.
+typealias Trash = @MainActor (URL) throws -> URL?
+
+enum SystemTrash {
+    @MainActor
+    static func move(_ url: URL) throws -> URL? {
+        var trashed: NSURL?
+        try FileManager.default.trashItem(at: url, resultingItemURL: &trashed)
+        return trashed as URL?
+    }
+}
+
 /// Recent file operations, persisted across launches, with undo.
 @MainActor
 @Observable
@@ -49,8 +62,11 @@ final class HistoryStore {
 
     @ObservationIgnored private let fileURL: URL?
 
-    init(fileURL: URL? = HistoryStore.defaultFileURL) {
+    @ObservationIgnored private let trash: Trash
+
+    init(fileURL: URL? = HistoryStore.defaultFileURL, trash: @escaping Trash = SystemTrash.move) {
         self.fileURL = fileURL
+        self.trash = trash
         load()
     }
 
@@ -81,7 +97,7 @@ final class HistoryStore {
                 switch step {
                 case let .trashCreated(url):
                     guard fileManager.fileExists(atPath: url.path) else { continue }
-                    try fileManager.trashItem(at: url, resultingItemURL: nil)
+                    _ = try trash(url)
                 case let .moveBack(from, to), let .restore(from, to):
                     guard fileManager.fileExists(atPath: from.path) else {
                         // Either already back where it was, or gone (the Trash was emptied).

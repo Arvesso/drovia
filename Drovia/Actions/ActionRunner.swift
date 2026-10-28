@@ -15,7 +15,16 @@ final class ActionRunner {
     /// take turns overwriting the toast, replace a summary and its Undo button, or hide each other's toast.
     private var progressOwner: UUID?
 
-    init(settings: SettingsStore, toast: ToastPresenter, history: HistoryStore, shelf: ShelfController) {
+    private let trash: Trash
+
+    init(
+        settings: SettingsStore,
+        toast: ToastPresenter,
+        history: HistoryStore,
+        shelf: ShelfController,
+        trash: @escaping Trash = SystemTrash.move
+    ) {
+        self.trash = trash
         self.settings = settings
         self.toast = toast
         self.history = history
@@ -137,13 +146,12 @@ final class ActionRunner {
 
     private func trashOriginals(of result: ActionResult) -> [UndoStep] {
         result.processed.filter { $0.output != nil }.compactMap { file in
-            var trashed: NSURL?
             do {
-                try FileManager.default.trashItem(at: file.source, resultingItemURL: &trashed)
+                return try trash(file.source).map { .restore(trashed: $0, original: file.source) }
             } catch {
                 Logger.wheel.error("Couldn't trash \(file.source.lastPathComponent): \(error.localizedDescription)")
+                return nil
             }
-            return (trashed as URL?).map { .restore(trashed: $0, original: file.source) }
         }
     }
 

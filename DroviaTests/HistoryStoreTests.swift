@@ -6,10 +6,12 @@ import Testing
 struct HistoryStoreTests {
     private let folder: TemporaryFolder
     private let store: HistoryStore
+    private let trash: TestTrash
 
     init() throws {
         folder = try TemporaryFolder()
-        store = HistoryStore(fileURL: folder.url.appendingPathComponent("history.json"))
+        trash = try TestTrash(in: folder.url)
+        store = HistoryStore(fileURL: folder.url.appendingPathComponent("history.json"), trash: trash.move)
     }
 
     private func makeFile(_ name: String) throws -> URL {
@@ -77,6 +79,8 @@ struct HistoryStoreTests {
             undo: [.trashCreated(makeFile("out.txt"))]
         )
         try store.undo(entry.id)
+        // Into this test's own Trash, not the user's.
+        #expect(try FileManager.default.contentsOfDirectory(atPath: trash.folder.path).count == 1)
         #expect(throws: UndoError.self) { try store.undo(entry.id) }
     }
 

@@ -733,6 +733,17 @@
         }
       }
     },
+    "Archive": {
+      "comment": "File name of a zip made from several files, like Finder's",
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Архив"
+          }
+        }
+      }
+    },
     "Archives": {
       "localizations": {
         "ru": {
