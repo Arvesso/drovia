@@ -5,7 +5,7 @@ struct DroviaApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        MenuBarExtra("Drovia", systemImage: "circle.dashed.inset.filled") {
+        MenuBarExtra {
             MenuBarContent(
                 folderAccess: appDelegate.folderAccess,
                 onboarding: appDelegate.onboarding,
@@ -13,6 +13,9 @@ struct DroviaApp: App {
                 shelf: appDelegate.shelf,
                 runner: appDelegate.runner
             )
+        } label: {
+            Image(nsImage: MenuBarIcon.image)
+                .accessibilityLabel("Drovia")
         }
 
         Settings {
