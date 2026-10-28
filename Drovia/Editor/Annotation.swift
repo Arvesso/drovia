@@ -211,6 +211,15 @@ enum AnnotationDrawer {
     private static func drawRedaction(
         _ rect: CGRect, source: CGImage, sourceScale: CGFloat, style: RedactionStyle, in context: CGContext
     ) {
+        // Only the part over the image: the piece cut from it would otherwise be stretched over the whole rect.
+        let imageBounds = CGRect(
+            x: 0,
+            y: 0,
+            width: CGFloat(source.width) / sourceScale,
+            height: CGFloat(source.height) / sourceScale
+        )
+        let rect = rect.intersection(imageBounds)
+        guard !rect.isEmpty else { return }
         let sampled = CGRect(
             x: rect.minX * sourceScale,
             y: rect.minY * sourceScale,
@@ -221,7 +230,8 @@ enum AnnotationDrawer {
               let covered = try? VisionEngine.redact(
                   piece,
                   regions: [CGRect(x: 0, y: 0, width: piece.width, height: piece.height)],
-                  style: style
+                  style: style,
+                  pixelScale: sourceScale
               )
         else {
             context.setFillColor(CGColor(gray: 0, alpha: 1))

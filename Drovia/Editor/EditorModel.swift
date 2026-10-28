@@ -97,6 +97,7 @@ struct EditedImage {
 final class EditorModel {
     struct Snapshot: Equatable, Hashable {
         var crop: CGRect
+        var cropAspect: CropAspect
         var annotations: [Annotation]
         var background: BackgroundStyle
         var usesBackground: Bool
@@ -116,16 +117,35 @@ final class EditorModel {
 
     var mode: EditorMode {
         didSet {
-            if mode == .background {
+            if mode == .background, !usesBackground {
                 usesBackground = true
+                backgroundWasOnlyLookedAt = true
+            } else if oldValue == .background, backgroundWasOnlyLookedAt {
+                // Just looking at the Background tab shouldn't frame the image that's saved.
+                usesBackground = false
+                backgroundWasOnlyLookedAt = false
             }
         }
     }
 
+    /// The background was switched on by opening its tab, and nothing was changed there since.
+    @ObservationIgnored private var backgroundWasOnlyLookedAt = false
+
     var crop = CGRect.zero
     var cropAspect = CropAspect.free {
-        didSet { applyAspect() }
+        didSet {
+            guard !isSettingAspectQuietly, cropAspect != oldValue else { return }
+            // The state before the change, aspect included (by now `cropAspect` already holds the new one).
+            var before = snapshot
+            before.cropAspect = oldValue
+            undoStack.append(before)
+            redoStack.removeAll()
+            applyAspect()
+        }
     }
+
+    /// Set while the aspect changes as part of something else (undo, Reset), which records its own undo.
+    @ObservationIgnored private var isSettingAspectQuietly = false
 
     var annotations: [Annotation] = []
     var draft: Annotation?
@@ -135,8 +155,13 @@ final class EditorModel {
     /// A text annotation being typed, at a point in image pixels.
     var textEntry: (point: CGPoint, text: String)?
 
-    var background = BackgroundStyle()
-    var usesBackground: Bool
+    var background = BackgroundStyle() {
+        didSet { backgroundWasOnlyLookedAt = false }
+    }
+
+    var usesBackground: Bool {
+        didSet { backgroundWasOnlyLookedAt = false }
+    }
 
     let redaction: RedactionStyle
     private(set) var isSaving = false
@@ -160,7 +185,10 @@ final class EditorModel {
     }
 
     var snapshot: Snapshot {
-        Snapshot(crop: crop, annotations: annotations, background: background, usesBackground: usesBackground)
+        Snapshot(
+            crop: crop, cropAspect: cropAspect, annotations: annotations, background: background,
+            usesBackground: usesBackground
+        )
     }
 
     var canUndo: Bool {
@@ -202,6 +230,9 @@ final class EditorModel {
     }
 
     private func restore(_ snapshot: Snapshot) {
+        isSettingAspectQuietly = true
+        defer { isSettingAspectQuietly = false }
+        cropAspect = snapshot.cropAspect
         crop = snapshot.crop
         annotations = snapshot.annotations
         background = snapshot.background
@@ -212,7 +243,9 @@ final class EditorModel {
 
     func resetCrop() {
         recordUndo()
+        isSettingAspectQuietly = true
         cropAspect = .free
+        isSettingAspectQuietly = false
         crop = CGRect(origin: .zero, size: imageSize)
     }
 
@@ -247,15 +280,15 @@ final class EditorModel {
             x: point.x < anchor.x ? anchor.x - size.width : anchor.x,
             y: point.y < anchor.y ? anchor.y - size.height : anchor.y,
             width: size.width, height: size.height
-        ).intersection(CGRect(origin: .zero, size: imageSize))
+        ).integral.intersection(CGRect(origin: .zero, size: imageSize))
         guard rect.width >= 16, rect.height >= 16 else { return }
+        // Whole pixels, so the size shown is the size saved.
         crop = rect
     }
 
     /// The largest crop with the chosen aspect, centered on the current one.
     private func applyAspect() {
         guard let ratio = cropAspect.ratio(for: imageSize) else { return }
-        recordUndo()
         var size = CGSize(width: imageSize.width, height: imageSize.width / ratio)
         if size.height > imageSize.height {
             size = CGSize(width: imageSize.height * ratio, height: imageSize.height)

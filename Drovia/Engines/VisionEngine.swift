@@ -159,8 +159,12 @@ enum VisionEngine {
         return ranges
     }
 
-    /// Covers `regions` of `image` in the given style.
-    static func redact(_ image: CGImage, regions: [CGRect], style: RedactionStyle) throws -> CGImage {
+    /// Covers `regions` of `image` in the given style. `pixelScale` is the image's pixels per pixel of the
+    /// original, for a downscaled preview: the minimum blur and block sizes then shrink with it, so the
+    /// preview looks as strong as the saved file rather than stronger.
+    static func redact(
+        _ image: CGImage, regions: [CGRect], style: RedactionStyle, pixelScale: CGFloat = 1
+    ) throws -> CGImage {
         let height = CGFloat(image.height)
         var output = CIImage(cgImage: image)
         let original = output
@@ -172,7 +176,7 @@ enum VisionEngine {
             case .blackBox:
                 cover = CIImage(color: .black).cropped(to: rect)
             case .pixelate:
-                let scale = max(8, max(rect.width, rect.height) / 10)
+                let scale = max(8 * pixelScale, max(rect.width, rect.height) / 10)
                 // Blurring first makes the blocks impossible to match against rendered text (as Depix does).
                 cover = original.clampedToExtent()
                     .applyingGaussianBlur(sigma: scale / 2)
@@ -182,7 +186,7 @@ enum VisionEngine {
                     )
                     .cropped(to: rect)
             case .blur:
-                let radius = max(12, min(rect.width, rect.height) / 4)
+                let radius = max(12 * pixelScale, min(rect.width, rect.height) / 4)
                 cover = original.clampedToExtent()
                     .applyingGaussianBlur(sigma: radius)
                     .cropped(to: rect)

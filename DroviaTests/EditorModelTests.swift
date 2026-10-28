@@ -21,6 +21,32 @@ struct EditorModelTests {
         model = EditorModel(files: [url], mode: .crop, redaction: .blackBox)
     }
 
+    @Test func lookingAtTheBackgroundTabDoesNotFrameTheImage() {
+        model.mode = .background
+        #expect(model.usesBackground)
+        model.mode = .crop
+        #expect(!model.usesBackground)
+        // Once something was changed there, it stays.
+        model.mode = .background
+        model.background.padding = 0.2
+        model.mode = .crop
+        #expect(model.usesBackground)
+    }
+
+    @Test func undoRestoresTheAspectWithTheCrop() {
+        model.cropAspect = .square
+        #expect(model.crop.width == model.crop.height)
+        model.undo()
+        #expect(model.cropAspect == .free)
+        #expect(model.crop == CGRect(x: 0, y: 0, width: 400, height: 200))
+        #expect(!model.canUndo)
+    }
+
+    @Test func draggedCropIsInWholePixels() {
+        model.dragCrop(.new, from: model.crop, start: CGPoint(x: 10.3, y: 10.6), to: CGPoint(x: 120.4, y: 90.2))
+        #expect(model.crop == model.crop.integral)
+    }
+
     @Test func startsWithFullImageCrop() {
         #expect(model.imageSize == CGSize(width: 400, height: 200))
         #expect(model.crop == CGRect(x: 0, y: 0, width: 400, height: 200))

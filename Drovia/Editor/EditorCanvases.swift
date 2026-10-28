@@ -199,10 +199,10 @@ struct AnnotationCanvas: View {
                     }
             )
             .onContinuousHover { phase in
-                if case .active = phase, model.tool == .text {
-                    NSCursor.iBeam.set()
-                } else {
-                    NSCursor.crosshair.set()
+                switch phase {
+                case .active: (model.tool == .text ? NSCursor.iBeam : NSCursor.crosshair).set()
+                // Leaving the canvas: back to the arrow over the toolbars.
+                case .ended: NSCursor.arrow.set()
                 }
             }
         }
@@ -235,10 +235,13 @@ struct BackgroundPreview: View {
         .task(id: model.snapshot) {
             try? await Task.sleep(for: .milliseconds(40))
             guard !Task.isCancelled, let preview = model.preview else { return }
-            rendered = try? await model.render(
+            let image = try? await model.render(
                 source: preview,
                 outputScale: CGFloat(preview.width) / model.imageSize.width
             )
+            // A slower render for earlier settings mustn't replace a newer one.
+            guard !Task.isCancelled else { return }
+            rendered = image
         }
     }
 }
