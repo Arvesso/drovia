@@ -144,8 +144,12 @@ enum ActionRegistry {
     private static func sectorOrder(for wheel: WheelKind, layout: WheelLayout) -> [String: Int] {
         var seen: Set<String> = []
         let defaults = all.filter { $0.wheel == wheel && seen.insert($0.sectorID).inserted }.map(\.sectorID)
-        let custom = (layout.order[wheel.rawValue] ?? []).filter(defaults.contains)
-        let ordered = custom + defaults.filter { !custom.contains($0) }
+        var ordered = (layout.order[wheel.rawValue] ?? []).filter(defaults.contains)
+        // Sectors added by an update go right after the one before them by default, not to the end.
+        for (index, id) in defaults.enumerated() where !ordered.contains(id) {
+            let previous = defaults[..<index].last(where: ordered.contains).flatMap(ordered.firstIndex)
+            ordered.insert(id, at: previous.map { $0 + 1 } ?? ordered.endIndex)
+        }
         return Dictionary(uniqueKeysWithValues: ordered.enumerated().map { ($1, $0) })
     }
 }

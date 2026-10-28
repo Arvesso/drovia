@@ -2,7 +2,8 @@ import KeyboardShortcuts
 import SwiftUI
 
 struct OnboardingView: View {
-    let practiceFile: URL
+    /// `nil` if the sample couldn't be made (Application Support not writable).
+    let practiceFile: URL?
     let history: HistoryStore
     let onDragStart: ([URL]) -> Void
     let onDragEnd: () -> Void
@@ -15,7 +16,7 @@ struct OnboardingView: View {
     }
 
     init(
-        practiceFile: URL, history: HistoryStore, startPage: Page = .welcome,
+        practiceFile: URL?, history: HistoryStore, startPage: Page = .welcome,
         onDragStart: @escaping ([URL]) -> Void, onDragEnd: @escaping () -> Void, onFinish: @escaping () -> Void
     ) {
         self.practiceFile = practiceFile
@@ -33,12 +34,21 @@ struct OnboardingView: View {
                 case .welcome: WelcomePage()
                 case .wheels: WheelsPage()
                 case .folders: FoldersPage()
-                case .practice: PracticePage(
-                        file: practiceFile,
-                        history: history,
-                        onDragStart: onDragStart,
-                        onDragEnd: onDragEnd
-                    )
+                case .practice:
+                    if let practiceFile {
+                        PracticePage(
+                            file: practiceFile,
+                            history: history,
+                            onDragStart: onDragStart,
+                            onDragEnd: onDragEnd
+                        )
+                    } else {
+                        Text(
+                            "The practice file couldn't be made. Try the wheel on any file in an allowed folder instead."
+                        )
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                    }
                 case .done: DonePage()
                 }
             }
@@ -209,12 +219,14 @@ private struct PracticePage: View {
     let onDragStart: ([URL]) -> Void
     let onDragEnd: () -> Void
 
-    @State private var startCount: Int?
+    /// The newest history entry when the page appeared; a different one means the practice worked.
+    /// (Counting entries fails once history is full.)
+    @State private var startEntry: HistoryEntry.ID??
     @State private var thumbnail: NSImage?
 
     private var succeeded: Bool {
-        guard let startCount else { return false }
-        return history.entries.count > startCount
+        guard let startEntry, let newest = history.entries.first?.id else { return false }
+        return newest != startEntry
     }
 
     var body: some View {
@@ -254,11 +266,11 @@ private struct PracticePage: View {
             }
             .animation(.spring(duration: 0.35, bounce: 0.4), value: succeeded)
 
-            Text("Tip: the sample isn't in an allowed folder — files you drag out of Drovia's own windows always work.")
+            Text("Tip: files you drag out of Drovia's own windows always work, whatever folder they're in.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
-        .onAppear { startCount = startCount ?? history.entries.count }
+        .onAppear { startEntry = startEntry ?? .some(history.entries.first?.id) }
         .task { thumbnail = await Thumbnails.image(for: DragContent(fileURLs: [file]), side: 240) }
     }
 }
@@ -272,11 +284,18 @@ private struct DonePage: View {
             Text("You're all set")
                 .font(.title.bold())
             VStack(alignment: .leading, spacing: 14) {
-                let shortcut = KeyboardShortcuts.getShortcut(for: .showWheel)?.description ?? "⌃⌥D"
-                Tip(
-                    symbol: "keyboard",
-                    text: "Select files in Finder and press \(shortcut) to open the wheel without dragging."
-                )
+                if let shortcut = KeyboardShortcuts.getShortcut(for: .showWheel)?.description {
+                    Tip(
+                        symbol: "keyboard",
+                        text: "Select files in Finder and press \(shortcut) to open the wheel without dragging."
+                    )
+                } else {
+                    // The shortcut was cleared; naming the default would point at a key that does nothing.
+                    Tip(
+                        symbol: "keyboard",
+                        text: "Set a shortcut in Settings → General to open the wheel for files selected in Finder."
+                    )
+                }
                 Tip(
                     symbol: "menubar.arrow.up.rectangle",
                     text: "Drovia lives in the menu bar: undo, recent results and the shelf are there."

@@ -34,7 +34,10 @@ struct ShelfView: View {
                 .opacity(isTargeted ? 1 : 0)
         }
         .dropDestination(for: URL.self) { urls, _ in
-            controller.add(urls.filter(\.isFileURL))
+            let files = urls.filter(\.isFileURL)
+            // Nothing to hold (a web link, say): refuse rather than accept and show nothing.
+            guard !files.isEmpty else { return false }
+            controller.add(files)
             return true
         } isTargeted: { isTargeted = $0 }
     }
@@ -47,9 +50,14 @@ struct ShelfView: View {
                 FileDragSource(
                     urls: { model.items.map(\.url) },
                     onBegin: { controller.onDragStart?($0) },
-                    onEnd: { _ in
+                    onEnd: { operation in
                         controller.onDragEnd?()
-                        controller.pruneMissingFiles()
+                        // As for a single row: moved files leave the shelf.
+                        if operation.contains(.move) || operation.contains(.delete) {
+                            controller.clear()
+                        } else {
+                            controller.pruneMissingFiles()
+                        }
                     }
                 )
             }

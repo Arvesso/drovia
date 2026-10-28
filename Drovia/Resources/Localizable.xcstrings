@@ -663,6 +663,16 @@
         }
       }
     },
+    "Allow Drovia in Login Items to finish.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чтобы закончить, разрешите Drovia в объектах входа."
+          }
+        }
+      }
+    },
     "Allow it in Settings → General → Keyboard": {
       "localizations": {
         "ru": {
@@ -2319,6 +2329,16 @@
         }
       }
     },
+    "Open Login Items": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть объекты входа"
+          }
+        }
+      }
+    },
     "Open Privacy Settings": {
       "localizations": {
         "ru": {
@@ -2949,6 +2969,16 @@
         }
       }
     },
+    "Set a shortcut in Settings → General to open the wheel for files selected in Finder.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Задайте сочетание клавиш в Настройках → Основные, чтобы открывать колесо для файлов, выбранных в Finder."
+          }
+        }
+      }
+    },
     "Settings…": {
       "localizations": {
         "ru": {
@@ -3229,6 +3259,16 @@
         }
       }
     },
+    "The practice file couldn't be made. Try the wheel on any file in an allowed folder instead.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось создать файл для практики. Попробуйте колесо на любом файле из разрешённой папки."
+          }
+        }
+      }
+    },
     "This folder isn't allowed": {
       "localizations": {
         "ru": {
@@ -3249,12 +3289,12 @@
         }
       }
     },
-    "Tip: the sample isn't in an allowed folder — files you drag out of Drovia's own windows always work.": {
+    "Tip: files you drag out of Drovia's own windows always work, whatever folder they're in.": {
       "localizations": {
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Пример лежит вне разрешённых папок — но файлы из окон самой Drovia работают всегда."
+            "value": "Совет: файлы, которые вы перетаскиваете из окон самой Drovia, работают всегда, в какой бы папке они ни лежали."
           }
         }
       }

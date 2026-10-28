@@ -24,6 +24,8 @@ final class ActionRunner {
 
     func run(_ action: any DroviaAction, on files: [URL]) async {
         guard !files.isEmpty else { return }
+        // Files on the shelf may have been moved, renamed or trashed by this action.
+        defer { shelf.pruneMissingFiles() }
         let tint = action.wheel.tint
 
         let run = UUID()
@@ -97,6 +99,7 @@ final class ActionRunner {
     }
 
     func undo(_ entry: HistoryEntry) {
+        defer { shelf.pruneMissingFiles() }
         do {
             try history.undo(entry.id)
             toast.show(

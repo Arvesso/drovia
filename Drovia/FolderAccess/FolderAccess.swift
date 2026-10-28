@@ -74,7 +74,9 @@ final class FolderAccess {
     func add(_ urls: [URL]) {
         for url in urls {
             let path = url.standardizedFileURL.path
-            guard !folders.contains(where: { $0.path == path }) else { continue }
+            // Already covered by an allowed folder around it; and folders inside the new one become redundant.
+            guard !folders.contains(where: { FolderScope.contains($0.path, path: path) }) else { continue }
+            folders.removeAll { FolderScope.contains(path, path: $0.path) }
             let bookmark = try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
             folders.append(AllowedFolder(path: path, bookmark: bookmark))
             requestAccess(to: path)
@@ -130,7 +132,16 @@ final class FolderAccess {
     private func resolvingBookmark(_ folder: AllowedFolder) -> AllowedFolder {
         guard let bookmark = folder.bookmark else { return folder }
         var isStale = false
-        guard let url = try? URL(resolvingBookmarkData: bookmark, bookmarkDataIsStale: &isStale) else { return folder }
+        // At launch: never show UI or mount a network share or disk that isn't there; the stored path is used.
+        guard let url = try? URL(
+                  resolvingBookmarkData: bookmark,
+                  options: [.withoutUI, .withoutMounting],
+                  relativeTo: nil,
+                  bookmarkDataIsStale: &isStale
+              ),
+              // A folder moved to the Trash isn't one the user means to allow any more.
+              !url.path.contains("/.Trash/")
+        else { return folder }
         var resolved = folder
         resolved.path = url.standardizedFileURL.path
         if isStale {
