@@ -40,18 +40,26 @@ struct EditorView: View {
             }
 
             ControlGroup {
+                // While typing, ⌘Z belongs to the text field.
                 Button("Undo", systemImage: "arrow.uturn.backward") { model.undo() }
                     .keyboardShortcut("z")
-                    .disabled(!model.canUndo)
+                    .disabled(!model.canUndo || model.textEntry != nil)
                 Button("Redo", systemImage: "arrow.uturn.forward") { model.redo() }
                     .keyboardShortcut("z", modifiers: [.command, .shift])
-                    .disabled(!model.canRedo)
+                    .disabled(!model.canRedo || model.textEntry != nil)
             }
             .fixedSize()
 
-            Button("Cancel") { model.finish() }
-                .keyboardShortcut(.cancelAction)
-                .disabled(model.isSaving)
+            // Esc while typing drops the text being typed, not every edit made to the image.
+            Button("Cancel") {
+                if model.textEntry != nil {
+                    model.textEntry = nil
+                } else {
+                    model.finish()
+                }
+            }
+            .keyboardShortcut(.cancelAction)
+            .disabled(model.isSaving)
             if model.hasMoreFiles {
                 Button("Skip") { model.skip() }
                     .disabled(model.isSaving)
