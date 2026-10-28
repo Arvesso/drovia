@@ -1,0 +1,18 @@
+name: Feature request
+description: Suggest an action, an improvement or a change
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What you're trying to do
+      description: The task or situation, rather than the solution. "I often need to…"
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+      description: How you imagine it working in Drovia (which wheel, which files), and anything you tried instead.
+    validations:
+      required: true
