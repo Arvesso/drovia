@@ -19,15 +19,14 @@ struct ShelfItem: Identifiable, Equatable {
         if FileManager.default.fileExists(atPath: url.path) {
             return url
         }
+        guard let bookmark else { return nil }
         var isStale = false
-        guard let bookmark,
-              let moved = try? URL(
-                  resolvingBookmarkData: bookmark, options: [.withoutUI, .withoutMounting],
-                  relativeTo: nil, bookmarkDataIsStale: &isStale
-              ),
-              !moved.path.contains("/.Trash/"), FileManager.default.fileExists(atPath: moved.path)
-        else { return nil }
-        return moved
+        let options: URL.BookmarkResolutionOptions = [.withoutUI, .withoutMounting]
+        guard let moved = try? URL(
+            resolvingBookmarkData: bookmark, options: options, relativeTo: nil, bookmarkDataIsStale: &isStale
+        ) else { return nil }
+        let isGone = moved.path.contains("/.Trash/") || !FileManager.default.fileExists(atPath: moved.path)
+        return isGone ? nil : moved
     }
 }
 

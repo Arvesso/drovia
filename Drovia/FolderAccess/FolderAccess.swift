@@ -133,15 +133,12 @@ final class FolderAccess {
         guard let bookmark = folder.bookmark else { return folder }
         var isStale = false
         // At launch: never show UI or mount a network share or disk that isn't there; the stored path is used.
+        let options: URL.BookmarkResolutionOptions = [.withoutUI, .withoutMounting]
         guard let url = try? URL(
-                  resolvingBookmarkData: bookmark,
-                  options: [.withoutUI, .withoutMounting],
-                  relativeTo: nil,
-                  bookmarkDataIsStale: &isStale
-              ),
-              // A folder moved to the Trash isn't one the user means to allow any more.
-              !url.path.contains("/.Trash/")
-        else { return folder }
+            resolvingBookmarkData: bookmark, options: options, relativeTo: nil, bookmarkDataIsStale: &isStale
+        ) else { return folder }
+        // A folder moved to the Trash isn't one the user means to allow any more.
+        guard !url.path.contains("/.Trash/") else { return folder }
         var resolved = folder
         resolved.path = url.standardizedFileURL.path
         if isStale {
