@@ -51,6 +51,16 @@
         }
       }
     },
+    "%@ has no text. Use Text on the Tools wheel to read a scan.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В %@ нет текста. Чтобы прочитать скан, используйте «Текст» на колесе инструментов."
+          }
+        }
+      }
+    },
     "%@ has no video": {
       "localizations": {
         "ru": {
@@ -67,6 +77,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Изображения %@ не могут быть больше %lld px"
+          }
+        }
+      }
+    },
+    "%@ is animated or has several pages; only PDF keeps them all": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ — анимация или несколько страниц; сохранить их все может только PDF"
           }
         }
       }
@@ -1089,6 +1109,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Конвертация"
+          }
+        }
+      }
+    },
+    "Convert to WebP or JPEG, or set a maximum size in Settings": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конвертируйте в WebP или JPEG либо задайте максимальный размер в настройках"
           }
         }
       }

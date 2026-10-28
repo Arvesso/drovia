@@ -37,6 +37,12 @@ enum ImageFormat: String, CaseIterable, Sendable {
         [.jpeg, .webp, .heic, .avif].contains(self)
     }
 
+    /// Quality for re-encoding a file in its own format when it can't be copied losslessly (removing
+    /// metadata, turning): lossless for WebP (which may be lossless already), near-lossless otherwise.
+    var reencodeQuality: Double {
+        self == .webp ? 1 : 0.95
+    }
+
     var supportsAlpha: Bool {
         ![.jpeg, .bmp].contains(self)
     }

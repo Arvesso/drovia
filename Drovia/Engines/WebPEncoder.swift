@@ -6,7 +6,8 @@ import libwebp
 enum WebPEncoder {
     static let maxSide = 16383
 
-    static func encode(_ image: CGImage, quality: Double) throws -> Data {
+    /// `lossless` keeps every pixel exactly; `quality` (0...1) is then ignored.
+    static func encode(_ image: CGImage, quality: Double, lossless: Bool = false) throws -> Data {
         let width = image.width
         let height = image.height
         guard width <= maxSide, height <= maxSide else {
@@ -31,7 +32,16 @@ enum WebPEncoder {
 
         var output: UnsafeMutablePointer<UInt8>?
         let size = rgba.withUnsafeBufferPointer {
-            WebPEncodeRGBA($0.baseAddress, Int32(width), Int32(height), Int32(stride), Float(quality * 100), &output)
+            lossless
+                ? WebPEncodeLosslessRGBA($0.baseAddress, Int32(width), Int32(height), Int32(stride), &output)
+                : WebPEncodeRGBA(
+                    $0.baseAddress,
+                    Int32(width),
+                    Int32(height),
+                    Int32(stride),
+                    Float(quality * 100),
+                    &output
+                )
         }
         guard size > 0, let output else { throw ImageEngineError.cannotWrite(.webp) }
         defer { WebPFree(output) }
