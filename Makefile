@@ -7,7 +7,13 @@ XCODEBUILD   := xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination 'p
 
 .PHONY: gen build release run test format lint icon clean logs signing docs-images
 
+# Warns when a local tool isn't the version CI uses (from .swiftformat_version / .xcodegen_version):
+# versions can format or generate differently.
+check_version = @have=$$($(1) --version | grep -oE '[0-9]+(\.[0-9]+)+' | head -1); want=$$(tr -d '[:space:]' < $(2)); \
+	[ "$$have" = "$$want" ] || echo "warning: $(1) is $$have, the project uses $$want ($(2)); results may differ from CI" >&2
+
 gen:
+	$(call check_version,xcodegen,.xcodegen_version)
 	xcodegen generate --quiet
 
 build: gen
@@ -25,9 +31,11 @@ test: gen
 	$(XCODEBUILD) test -quiet
 
 format:
+	$(call check_version,swiftformat,.swiftformat_version)
 	swiftformat .
 
 lint:
+	$(call check_version,swiftformat,.swiftformat_version)
 	swiftformat --lint .
 
 icon:
