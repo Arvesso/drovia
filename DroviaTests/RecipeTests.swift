@@ -7,11 +7,12 @@ import UniformTypeIdentifiers
 @MainActor
 struct RecipeTests {
     private let folder: TemporaryFolder
+    private let testDefaults = TestDefaults()
     private let settings: SettingsStore
 
     init() throws {
         folder = try TemporaryFolder()
-        settings = SettingsStore(defaults: UserDefaults(suiteName: "RecipeTests-\(UUID().uuidString)")!)
+        settings = SettingsStore(defaults: testDefaults.defaults)
         settings.resizePreset = .half
     }
 

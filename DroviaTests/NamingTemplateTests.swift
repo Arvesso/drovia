@@ -83,3 +83,67 @@ final class TemporaryFolder {
         try? FileManager.default.removeItem(at: url)
     }
 }
+
+/// UserDefaults of its own for a test, kept in memory. A suite on disk leaves a plist in
+/// ~/Library/Preferences per test run: cfprefsd writes it again a minute later even after the domain is
+/// removed and the file deleted.
+final class TestDefaults {
+    let defaults: UserDefaults = InMemoryDefaults()
+}
+
+private final class InMemoryDefaults: UserDefaults {
+    private var values: [String: Any] = [:]
+
+    init() {
+        // A suite name is required to make a separate instance; nothing is ever read from or written to it.
+        super.init(suiteName: "DroviaTests.InMemory")!
+    }
+
+    override func object(forKey key: String) -> Any? {
+        values[key]
+    }
+
+    override func set(_ value: Any?, forKey key: String) {
+        values[key] = value
+    }
+
+    override func removeObject(forKey key: String) {
+        values[key] = nil
+    }
+
+    override func set(_ value: Bool, forKey key: String) {
+        values[key] = value
+    }
+
+    override func set(_ value: Int, forKey key: String) {
+        values[key] = value
+    }
+
+    override func set(_ value: Double, forKey key: String) {
+        values[key] = value
+    }
+
+    override func string(forKey key: String) -> String? {
+        values[key] as? String
+    }
+
+    override func stringArray(forKey key: String) -> [String]? {
+        values[key] as? [String]
+    }
+
+    override func data(forKey key: String) -> Data? {
+        values[key] as? Data
+    }
+
+    override func bool(forKey key: String) -> Bool {
+        values[key] as? Bool ?? false
+    }
+
+    override func integer(forKey key: String) -> Int {
+        values[key] as? Int ?? 0
+    }
+
+    override func double(forKey key: String) -> Double {
+        values[key] as? Double ?? 0
+    }
+}
