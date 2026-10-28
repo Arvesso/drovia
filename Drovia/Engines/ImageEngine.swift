@@ -161,7 +161,7 @@ enum ImageEngine {
         let image = format.supportsAlpha ? image : try flattened(image)
         switch format {
         case .webp:
-            try WebPEncoder.encode(image, quality: quality, lossless: quality >= 1)
+            try WebPEncoder.encode(image, quality: quality, lossless: quality >= 1, exif: exifBlock(from: properties))
                 .write(to: destination, options: .atomic)
         case .icns:
             try writeICNS(image, to: destination)
@@ -184,6 +184,36 @@ enum ImageEngine {
             CGImageDestinationAddImage(target, image, properties as CFDictionary)
             guard CGImageDestinationFinalize(target) else { throw ImageEngineError.cannotWrite(format) }
         }
+    }
+
+    /// The EXIF block (camera, date, location…) ImageIO would write for `properties`, for WebP, which ImageIO
+    /// can't write. Taken from a 1×1 JPEG written with those properties, so the format is exactly ImageIO's.
+    static func exifBlock(from properties: [CFString: Any]) -> Data? {
+        let keys = [kCGImagePropertyExifDictionary, kCGImagePropertyGPSDictionary, kCGImagePropertyTIFFDictionary]
+        guard keys.contains(where: { properties[$0] != nil }),
+              let pixel = CGContext(
+                  data: nil, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 0,
+                  space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+              )?.makeImage()
+        else { return nil }
+        let jpeg = NSMutableData()
+        guard let target = CGImageDestinationCreateWithData(jpeg, UTType.jpeg.identifier as CFString, 1, nil)
+        else { return nil }
+        CGImageDestinationAddImage(target, pixel, properties as CFDictionary)
+        guard CGImageDestinationFinalize(target) else { return nil }
+
+        // JPEG segments: FF xx, then a big-endian length that counts itself. EXIF is APP1 (FFE1) "Exif\0\0".
+        let bytes = [UInt8](jpeg as Data)
+        var index = 2
+        while index + 4 <= bytes.count, bytes[index] == 0xFF, bytes[index + 1] != 0xDA {
+            let length = Int(bytes[index + 2]) << 8 | Int(bytes[index + 3])
+            let payload = index + 4 ..< min(index + 2 + length, bytes.count)
+            if bytes[index + 1] == 0xE1, bytes[payload].starts(with: Array("Exif\0\0".utf8)) {
+                return Data(bytes[payload].dropFirst(6))
+            }
+            index += 2 + length
+        }
+        return nil
     }
 
     private static func copyLosslessly(
