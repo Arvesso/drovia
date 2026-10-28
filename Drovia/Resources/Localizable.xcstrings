@@ -1498,6 +1498,16 @@
         }
       }
     },
+    "Drovia didn't see this script being written, so another app may have changed it. It would run with Drovia's access to your folders.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drovia не видела, как писался этот скрипт, поэтому его могло изменить другое приложение. Он выполнится с доступом Drovia к вашим папкам."
+          }
+        }
+      }
+    },
     "Drovia isn't allowed to control Finder": {
       "localizations": {
         "ru": {
@@ -2810,6 +2820,16 @@
         }
       }
     },
+    "Run": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запустить"
+          }
+        }
+      }
+    },
     "Run %@ on %@": {
       "localizations": {
         "ru": {
@@ -2846,6 +2866,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Быстрая команда"
+          }
+        }
+      }
+    },
+    "Run the script in “%@”?": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запустить скрипт из «%@»?"
           }
         }
       }
@@ -3516,6 +3546,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "«%@» не подходит для этих файлов"
+          }
+        }
+      }
+    },
+    "“%@” has a script Drovia hasn't approved. Run the recipe once from the wheel to approve it.": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В «%@» есть скрипт, который Drovia ещё не одобрила. Запустите рецепт один раз с колеса, чтобы одобрить его."
           }
         }
       }

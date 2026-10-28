@@ -94,6 +94,8 @@ struct ActionContext {
     let planner: OutputPlanner
     let shelf: ShelfController
     let reportProgress: (Double) -> Void
+    /// Whether a dialog may ask the user something. Not when Shortcuts runs the action: nobody may be there.
+    var canAskUser = true
 
     /// One job per core, but no more than one per 4 GB of memory: a decoded 48 MP photo plus its encoding
     /// buffers takes about half a gigabyte, and a dozen at once would push smaller Macs into swapping.

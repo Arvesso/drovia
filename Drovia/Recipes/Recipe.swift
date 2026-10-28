@@ -16,6 +16,14 @@ struct Recipe: Identifiable, Codable, Equatable, Hashable {
     var symbol: String
     var steps: [Step]
 
+    /// The text of its shell-script steps.
+    var scripts: [String] {
+        steps.compactMap { step in
+            guard case let .script(source) = step else { return nil }
+            return source
+        }
+    }
+
     static let symbols = [
         "wand.and.stars", "sparkles", "bolt", "globe", "paperplane", "photo.stack", "tray.and.arrow.down",
         "doc.on.clipboard", "square.and.arrow.up", "hammer", "leaf", "star",

@@ -56,6 +56,7 @@ struct RecipesSettingsView: View {
 }
 
 private struct RecipeEditor: View {
+    @Environment(SettingsStore.self) private var settings
     @Binding var recipe: Recipe
     @State private var shortcutNames: [String] = []
 
@@ -134,7 +135,9 @@ private struct RecipeEditor: View {
                 }
             }
             Button("Run Shell Script") {
-                recipe.steps.append(.script("# Files are in \"$@\"\nfor file in \"$@\"; do\n  echo \"$file\"\ndone"))
+                let template = "# Files are in \"$@\"\nfor file in \"$@\"; do\n  echo \"$file\"\ndone"
+                settings.scriptApprovals.approve(template)
+                recipe.steps.append(.script(template))
             }
         } label: {
             Label("Add Step", systemImage: "plus")
@@ -145,6 +148,7 @@ private struct RecipeEditor: View {
 }
 
 private struct StepRow: View {
+    @Environment(SettingsStore.self) private var settings
     let index: Int
     @Binding var step: Recipe.Step
     let onDelete: () -> Void
@@ -180,12 +184,16 @@ private struct StepRow: View {
                     .foregroundStyle(.secondary)
             }
             if case let .script(source) = step {
-                TextEditor(text: Binding(get: { source }, set: { step = .script($0) }))
-                    .font(.system(size: 11, design: .monospaced))
-                    .frame(height: 80)
-                    .scrollContentBackground(.hidden)
-                    .padding(4)
-                    .background(.background.secondary, in: RoundedRectangle(cornerRadius: 6))
+                // Typed here, so it's the user's own: approved before the change is saved.
+                TextEditor(text: Binding(get: { source }, set: { text in
+                    settings.scriptApprovals.approve(text)
+                    step = .script(text)
+                }))
+                .font(.system(size: 11, design: .monospaced))
+                .frame(height: 80)
+                .scrollContentBackground(.hidden)
+                .padding(4)
+                .background(.background.secondary, in: RoundedRectangle(cornerRadius: 6))
             }
         }
     }

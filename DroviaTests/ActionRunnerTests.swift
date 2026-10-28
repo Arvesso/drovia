@@ -15,7 +15,7 @@ struct ActionRunnerTests {
     init() throws {
         folder = try TemporaryFolder()
         trash = try TestTrash(in: folder.url)
-        settings = SettingsStore(defaults: testDefaults.defaults)
+        settings = SettingsStore(defaults: testDefaults.defaults, scriptKey: TestScriptKey())
         history = HistoryStore(fileURL: folder.url.appendingPathComponent("history.json"), trash: trash.move)
         runner = ActionRunner(
             settings: settings, toast: ToastPresenter(), history: history, shelf: ShelfController(), trash: trash.move

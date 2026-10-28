@@ -93,8 +93,14 @@ final class SettingsStore {
     }
 
     var recipes: [Recipe] {
-        didSet { defaults.set(try? JSONEncoder().encode(recipes), forKey: Keys.recipes) }
+        didSet {
+            defaults.set(try? JSONEncoder().encode(recipes), forKey: Keys.recipes)
+            scriptApprovals.keepOnly(recipes.flatMap(\.scripts))
+        }
     }
+
+    /// Which recipe scripts may run; see `ScriptApprovals`.
+    @ObservationIgnored let scriptApprovals: ScriptApprovals
 
     /// Bundle IDs of apps whose drags Drovia ignores.
     var excludedApps: [String] {
@@ -215,8 +221,9 @@ final class SettingsStore {
 
     @ObservationIgnored private let defaults: UserDefaults
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, scriptKey: any ScriptApprovals.KeyStore = KeychainScriptKey()) {
         self.defaults = defaults
+        scriptApprovals = ScriptApprovals(defaults: defaults, keyStore: scriptKey)
         hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
         launchAtLogin = [.enabled, .requiresApproval].contains(SMAppService.mainApp.status)
         launchAtLoginNeedsApproval = SMAppService.mainApp.status == .requiresApproval

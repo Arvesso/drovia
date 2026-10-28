@@ -12,7 +12,7 @@ struct RecipeTests {
 
     init() throws {
         folder = try TemporaryFolder()
-        settings = SettingsStore(defaults: testDefaults.defaults)
+        settings = SettingsStore(defaults: testDefaults.defaults, scriptKey: TestScriptKey())
         settings.resizePreset = .half
     }
 
@@ -21,8 +21,16 @@ struct RecipeTests {
             settings: settings,
             planner: planner ?? OutputPlanner(location: .nextToOriginal, template: "{name}-{action}"),
             shelf: ShelfController(),
-            reportProgress: { _ in }
+            reportProgress: { _ in },
+            // Never a modal dialog in tests.
+            canAskUser: false
         )
+    }
+
+    /// As if typed in the recipe editor.
+    private func approved(_ recipe: Recipe) -> Recipe {
+        recipe.scripts.forEach(settings.scriptApprovals.approve)
+        return recipe
     }
 
     private func png(_ name: String = "photo.png") throws -> URL {
@@ -42,7 +50,7 @@ struct RecipeTests {
         let recipe = Recipe(name: "For the Web", symbol: "globe", steps: [
             .action(sectorID: "tools.resize"), .action(sectorID: "convert.webp"), .action(sectorID: "tools.metadata"),
         ])
-        let result = try await RecipeAction(recipe: recipe).perform([source], context: context())
+        let result = try await RecipeAction(recipe: approved(recipe)).perform([source], context: context())
         #expect(result.failures.isEmpty)
         let output = try #require(result.outputs.first)
         // Next to the original, not in a temporary folder.
@@ -58,7 +66,7 @@ struct RecipeTests {
         let recipe = Recipe(name: "Private JPEG", symbol: "eye.slash", steps: [
             .action(sectorID: "convert.jpeg"), .action(sectorID: "tools.redact"),
         ])
-        let result = try await RecipeAction(recipe: recipe).perform([source], context: context())
+        let result = try await RecipeAction(recipe: approved(recipe)).perform([source], context: context())
         let output = try #require(result.outputs.first)
         #expect(FileManager.default.fileExists(atPath: output.path))
         #expect(output.deletingLastPathComponent().standardizedFileURL == folder.url.standardizedFileURL)
@@ -69,7 +77,7 @@ struct RecipeTests {
     @Test func processesRepeatedFileOnce() async throws {
         let source = try png()
         let recipe = Recipe(name: "Small", symbol: "star", steps: [.action(sectorID: "tools.resize")])
-        let result = try await RecipeAction(recipe: recipe).perform([source, source], context: context())
+        let result = try await RecipeAction(recipe: approved(recipe)).perform([source, source], context: context())
         #expect(result.outputs.count == 1)
     }
 
@@ -78,7 +86,7 @@ struct RecipeTests {
         let recipe = Recipe(name: "Chatty", symbol: "terminal", steps: [
             .script("head -c 200000 /dev/zero; head -c 200000 /dev/zero >&2"),
         ])
-        let result = try await RecipeAction(recipe: recipe).perform([png()], context: context())
+        let result = try await RecipeAction(recipe: approved(recipe)).perform([png()], context: context())
         #expect(result.failures.isEmpty)
     }
 
@@ -98,7 +106,7 @@ struct RecipeTests {
         let recipe = Recipe(name: "Backwards", symbol: "star", steps: [
             .action(sectorID: "actions.copy"), .action(sectorID: "tools.resize"),
         ])
-        let action = RecipeAction(recipe: recipe)
+        let action = RecipeAction(recipe: approved(recipe))
         #expect(action.stepBeforeResults != nil)
         #expect(!action.supports([.png]))
         await #expect(throws: RecipeError.self) { _ = try await action.perform([png()], context: context()) }
@@ -108,7 +116,7 @@ struct RecipeTests {
         let recipe = Recipe(name: "Then fail", symbol: "star", steps: [
             .action(sectorID: "tools.resize"), .script("exit 3"),
         ])
-        let result = try await RecipeAction(recipe: recipe).perform([png()], context: context())
+        let result = try await RecipeAction(recipe: approved(recipe)).perform([png()], context: context())
         let output = try #require(result.outputs.first)
         #expect(FileManager.default.fileExists(atPath: output.path))
         #expect(result.message != nil)
@@ -117,7 +125,7 @@ struct RecipeTests {
     @Test func scriptsFindHomebrewTools() async throws {
         let marker = folder.url.appendingPathComponent("path.txt")
         let recipe = Recipe(name: "Path", symbol: "terminal", steps: [.script("echo \"$PATH\" > '\(marker.path)'")])
-        _ = try await RecipeAction(recipe: recipe).perform([png()], context: context())
+        _ = try await RecipeAction(recipe: approved(recipe)).perform([png()], context: context())
         #expect(try String(contentsOf: marker, encoding: .utf8).contains("/opt/homebrew/bin"))
     }
 
@@ -138,13 +146,40 @@ struct RecipeTests {
         #expect(try FileType.of(png()) == .png)
     }
 
+    @Test func scriptNobodyApprovedDoesNotRun() async throws {
+        let marker = folder.url.appendingPathComponent("ran.txt")
+        // As if written into the preferences by another app.
+        let recipe = Recipe(name: "Planted", symbol: "terminal", steps: [.script("touch '\(marker.path)'")])
+        await #expect(throws: RecipeError.self) {
+            _ = try await RecipeAction(recipe: recipe).perform([png()], context: context())
+        }
+        #expect(!FileManager.default.fileExists(atPath: marker.path))
+    }
+
+    @Test func approvalUnderAnotherKeyDoesNotCount() {
+        settings.scriptApprovals.approve("echo hi")
+        #expect(settings.scriptApprovals.isApproved("echo hi"))
+        // Same stored approvals, but a key that isn't Drovia's: what another app could compute.
+        let forger = ScriptApprovals(defaults: testDefaults.defaults, keyStore: TestScriptKey())
+        #expect(!forger.isApproved("echo hi"))
+    }
+
+    @Test func approvalsOfRemovedScriptsAreForgotten() {
+        let approvals = settings.scriptApprovals
+        approvals.approve("echo a")
+        approvals.approve("echo b")
+        approvals.keepOnly(["echo a"])
+        #expect(approvals.isApproved("echo a"))
+        #expect(!approvals.isApproved("echo b"))
+    }
+
     @Test func supportsFollowsTypeChanges() {
         let recipe = Recipe(
             name: "x",
             symbol: "star",
             steps: [.action(sectorID: "convert.webp"), .action(sectorID: "tools.resize")]
         )
-        let action = RecipeAction(recipe: recipe)
+        let action = RecipeAction(recipe: approved(recipe))
         #expect(action.supports([.png]))
         #expect(!action.supports([.mpeg4Movie]))
         #expect(!RecipeAction(recipe: Recipe(name: "empty", symbol: "star", steps: [])).supports([.png]))
@@ -156,7 +191,7 @@ struct RecipeTests {
         let recipe = Recipe(name: "Script", symbol: "terminal", steps: [
             .script("for f in \"$@\"; do basename \"$f\" >> '\(marker.path)'; done"),
         ])
-        let result = try await RecipeAction(recipe: recipe).perform([source], context: context())
+        let result = try await RecipeAction(recipe: approved(recipe)).perform([source], context: context())
         #expect(result.outputs.isEmpty)
         #expect(try String(contentsOf: marker, encoding: .utf8) == "photo.png\n")
     }
@@ -164,7 +199,7 @@ struct RecipeTests {
     @Test func failingScriptStopsRecipe() async throws {
         let recipe = Recipe(name: "Broken", symbol: "terminal", steps: [.script("echo nope >&2; exit 3")])
         await #expect(throws: RecipeScripts.Failure.self) {
-            _ = try await RecipeAction(recipe: recipe).perform([png()], context: context())
+            _ = try await RecipeAction(recipe: approved(recipe)).perform([png()], context: context())
         }
     }
 
