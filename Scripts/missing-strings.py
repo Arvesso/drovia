@@ -11,6 +11,13 @@ pattern = re.compile(
     r'"((?:[^"\\]|\\.)*)"'
 )
 specifier = re.compile(r"%(?:\d+\$)?(?:@|l{0,2}[dfu])")
+# String(localized: """ … """): lines lose their indentation, and a line ending in a backslash continues.
+multiline = re.compile(r'String\(localized:\s*"""\n(.*?)\n\s*"""', re.DOTALL)
+
+
+def joined(body):
+    lines = [line.strip() for line in body.split("\n")]
+    return "".join(line[:-1] if line.endswith("\\") else line + "\n" for line in lines).rstrip("\n")
 
 
 def without_interpolations(literal):
@@ -38,8 +45,11 @@ catalog = json.load(open("Drovia/Resources/Localizable.xcstrings"))["strings"]
 translated = {normalized(key) for key, entry in catalog.items() if "ru" in entry.get("localizations", {})}
 keys = set()
 for path in glob.glob("Drovia/**/*.swift", recursive=True):
-    for match in pattern.finditer(open(path).read()):
-        keys.add(without_interpolations(match.group(1)))
+    source = open(path).read()
+    for match in multiline.finditer(source):
+        keys.add(without_interpolations(joined(match.group(1))))
+    # A single-line match on a multi-line literal's opening quotes is the empty string; skip it.
+    keys.update(without_interpolations(match.group(1)) for match in pattern.finditer(source) if match.group(1))
 for key in sorted(keys):
     if normalized(key) not in translated:
         print(repr(key))

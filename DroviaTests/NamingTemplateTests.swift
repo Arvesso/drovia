@@ -1,3 +1,4 @@
+import CryptoKit
 @testable import Drovia
 import Foundation
 import Testing
@@ -163,5 +164,14 @@ final class TestTrash {
         let destination = folder.appendingPathComponent("\(UUID().uuidString)-\(url.lastPathComponent)")
         try FileManager.default.moveItem(at: url, to: destination)
         return destination
+    }
+}
+
+/// A key of its own for script approvals, so tests never touch the user's keychain.
+struct TestScriptKey: ScriptApprovals.KeyStore {
+    private let value = SymmetricKey(size: .bits256)
+
+    func key() -> SymmetricKey {
+        value
     }
 }

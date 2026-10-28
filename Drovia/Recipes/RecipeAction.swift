@@ -5,12 +5,17 @@ enum RecipeError: LocalizedError {
     case stepDoesNotFit(String)
     case emptyRecipe
     case stepBeforeResults(String)
+    case scriptNotApproved(String)
 
     var errorDescription: String? {
         switch self {
         case let .stepDoesNotFit(step): String(localized: "“\(step)” can't handle these files")
         case .emptyRecipe: String(localized: "This recipe has no steps")
         case let .stepBeforeResults(step): String(localized: "Move “\(step)” after the steps that make files")
+        case let .scriptNotApproved(recipe):
+            String(
+                localized: "“\(recipe)” has a script Drovia hasn't approved. Run the recipe once from the wheel to approve it."
+            )
         }
     }
 }
@@ -97,6 +102,13 @@ struct RecipeAction: DroviaAction {
         if let step = stepBeforeResults {
             throw RecipeError.stepBeforeResults(step.title)
         }
+        // Before anything runs: a script the user hasn't typed or approved may have been put there by another app.
+        let approvals = context.settings.scriptApprovals
+        for script in Set(recipe.scripts) where !approvals.isApproved(script) {
+            guard context.canAskUser else { throw RecipeError.scriptNotApproved(recipe.name) }
+            guard ScriptApprovalPrompt.ask(toRun: script, in: recipe.name) else { throw CancellationError() }
+            approvals.approve(script)
+        }
         let lastProducing = stepActions.lastIndex { $0?.producesFiles == true }
         let slug = recipe.name.lowercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber })
             .joined(separator: "-")
@@ -152,7 +164,8 @@ struct RecipeAction: DroviaAction {
                         settings: context.settings,
                         planner: planner,
                         shelf: context.shelf,
-                        reportProgress: stepProgress
+                        reportProgress: stepProgress,
+                        canAskUser: context.canAskUser
                     )
                     let stepResult = try await action.perform(current, context: stepContext)
                     result.failures += stepResult.failures

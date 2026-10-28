@@ -91,7 +91,9 @@ final class ActionRunner {
             throw CancellationError()
         }
         let planner = OutputPlanner(location: location, template: settings.fileNameTemplate)
-        let context = ActionContext(settings: settings, planner: planner, shelf: shelf, reportProgress: progress)
+        let context = ActionContext(
+            settings: settings, planner: planner, shelf: shelf, reportProgress: progress, canAskUser: allowsPrompts
+        )
 
         var result = try await action.perform(files, context: context)
         Logger.wheel.info("\(action.id): \(result.outputs.count) output(s), \(result.failures.count) failure(s)")

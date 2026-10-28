@@ -27,7 +27,7 @@ struct OutputGuaranteesTests {
     @Test func zipReportsEveryFileItContains() async throws {
         let files = try ["a.txt", "b.txt", "c.txt"].map(makeFile)
         let testDefaults = TestDefaults()
-        let settings = SettingsStore(defaults: testDefaults.defaults)
+        let settings = SettingsStore(defaults: testDefaults.defaults, scriptKey: TestScriptKey())
         let context = ActionContext(
             settings: settings,
             planner: OutputPlanner(location: .nextToOriginal, template: "{name}-{action}"),
@@ -47,7 +47,7 @@ struct OutputGuaranteesTests {
         // A step kind from a newer version.
         stored.append(["id": UUID().uuidString, "name": "Future", "symbol": "star", "steps": [["teleport": [:]]]])
         try defaults.set(JSONSerialization.data(withJSONObject: stored), forKey: "recipes")
-        #expect(SettingsStore(defaults: defaults).recipes.map(\.name) == ["Kept"])
+        #expect(SettingsStore(defaults: defaults, scriptKey: TestScriptKey()).recipes.map(\.name) == ["Kept"])
     }
 
     @Test func wheelLayoutWithMissingFieldsKeepsTheRest() throws {
