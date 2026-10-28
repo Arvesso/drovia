@@ -107,6 +107,26 @@ struct ImageAndPDFQualityTests {
         #expect(iptc?[kCGImagePropertyIPTCCaptionAbstract] as? String == "Hi")
     }
 
+    @Test(arguments: [true, false])
+    func webpKeepsMetadataOnlyWhenAsked(_ keepsMetadata: Bool) throws {
+        let source = try write("photo.png", type: .png, properties: [
+            kCGImagePropertyExifDictionary: [kCGImagePropertyExifDateTimeOriginal: "2024:05:01 10:00:00"],
+            kCGImagePropertyGPSDictionary: [kCGImagePropertyGPSLatitude: 55.75, kCGImagePropertyGPSLatitudeRef: "N"],
+        ])
+        let output = folder.url.appendingPathComponent("photo.webp")
+        try ImageEngine.write(source, as: .webp, to: output, options: .init(keepsMetadata: keepsMetadata))
+        let exif = try properties(output)[kCGImagePropertyExifDictionary] as? [CFString: Any]
+        let date = exif?[kCGImagePropertyExifDateTimeOriginal] as? String
+        #expect(date == (keepsMetadata ? "2024:05:01 10:00:00" : nil))
+    }
+
+    @Test func webpKeepsWideGamut() throws {
+        let source = try write("p3.png", type: .png, image: image(space: CGColorSpace.displayP3))
+        let output = folder.url.appendingPathComponent("p3.webp")
+        try ImageEngine.write(source, as: .webp, to: output, options: .init())
+        #expect(try ImageEngine.loadImage(output).colorSpace?.name == CGColorSpace.displayP3)
+    }
+
     @Test func mergedPhotoGetsAPageSizedPage() throws {
         let photo = try write("photo.jpg", type: .jpeg, image: image(width: 4000, height: 3000))
         let pdf = folder.url.appendingPathComponent("merged.pdf")
