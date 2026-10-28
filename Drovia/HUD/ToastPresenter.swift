@@ -8,6 +8,8 @@ final class ToastPresenter {
     private static let displayDuration = Duration.seconds(2.4)
     /// Longer, so there's time to reach the Undo button.
     private static let undoableDisplayDuration = Duration.seconds(4)
+    /// After the pointer moves off a toast it waited for.
+    private static let lingerAfterPointerLeaves = Duration.seconds(1)
 
     private let model = ToastModel()
     private var hideTask: Task<Void, Never>?
@@ -117,9 +119,24 @@ final class ToastPresenter {
         hideTask?.cancel()
         hideTask = Task {
             try? await Task.sleep(for: duration)
+            // Not while the pointer is on it: the user is reaching for Undo or reading it. Checked by position
+            // rather than hover events, which a non-activating panel doesn't reliably get.
+            var waited = false
+            while !Task.isCancelled, isPointerOver {
+                waited = true
+                try? await Task.sleep(for: .milliseconds(200))
+            }
+            if waited {
+                try? await Task.sleep(for: Self.lingerAfterPointerLeaves)
+            }
             guard !Task.isCancelled else { return }
             hide()
         }
+    }
+
+    /// Only toasts that can be clicked (Undo, reveal) wait for the pointer; others let clicks through.
+    private var isPointerOver: Bool {
+        !panel.ignoresMouseEvents && panel.frame.contains(NSEvent.mouseLocation)
     }
 
     private func performUndo() {
