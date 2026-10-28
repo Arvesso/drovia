@@ -99,11 +99,64 @@ enum MediaEngine {
     ) async throws {
         let asset = AVURLAsset(url: source)
         guard try await !asset.loadTracks(withMediaType: .video).isEmpty else { throw MediaEngineError.noVideo(source) }
-        let passthrough = await AVAssetExportSession.compatibility(
+        guard try await canPassThrough(asset, to: format) else {
+            try await export(
+                asset,
+                preset: AVAssetExportPresetHighestQuality,
+                to: destination,
+                fileType: format.fileType,
+                progress: progress
+            )
+            return
+        }
+        do {
+            try await export(
+                asset,
+                preset: AVAssetExportPresetPassthrough,
+                to: destination,
+                fileType: format.fileType,
+                progress: progress
+            )
+        } catch {
+            // Some streams pass the checks but not the export; re-encoding still gets the file converted.
+            try await export(
+                asset,
+                preset: AVAssetExportPresetHighestQuality,
+                to: destination,
+                fileType: format.fileType,
+                progress: progress
+            )
+        }
+    }
+
+    /// Whether the streams can be copied as they are. The export session's own check only looks at the
+    /// container: it lets ProRes or PCM audio through to MP4, and the export then fails.
+    private static func canPassThrough(_ asset: AVAsset, to format: VideoFormat) async throws -> Bool {
+        guard await AVAssetExportSession.compatibility(
             ofExportPreset: AVAssetExportPresetPassthrough, with: asset, outputFileType: format.fileType
-        )
-        let preset = passthrough ? AVAssetExportPresetPassthrough : AVAssetExportPresetHighestQuality
-        try await export(asset, preset: preset, to: destination, fileType: format.fileType, progress: progress)
+        ) else { return false }
+        guard format == .mp4 else { return true }
+        let mp4Video: Set<FourCharCode> = [kCMVideoCodecType_H264, kCMVideoCodecType_HEVC]
+        let mp4Audio: Set<FourCharCode> = [
+            kAudioFormatMPEG4AAC,
+            kAudioFormatMPEGLayer3,
+            kAudioFormatAC3,
+            kAudioFormatEnhancedAC3,
+        ]
+        for track in try await asset.load(.tracks) {
+            let allowed: Set<FourCharCode>
+            switch track.mediaType {
+            case .video: allowed = mp4Video
+            case .audio: allowed = mp4Audio
+            default: continue
+            }
+            for description in try await track.load(.formatDescriptions)
+                where !allowed.contains(CMFormatDescriptionGetMediaSubType(description))
+            {
+                return false
+            }
+        }
+        return true
     }
 
     static func compress(
@@ -124,20 +177,24 @@ enum MediaEngine {
         progress: @escaping Progress
     ) async throws {
         let asset = AVURLAsset(url: source)
+        // Nothing to remove: a "muted" copy would just be the same video again.
+        guard try await !asset.loadTracks(withMediaType: .audio).isEmpty else { throw MediaEngineError.noAudio(source) }
         let composition = AVMutableComposition()
-        let duration = try await asset.load(.duration)
         for track in try await asset.loadTracks(withMediaType: .video) {
             guard let copy = composition.addMutableTrack(
                 withMediaType: .video,
                 preferredTrackID: kCMPersistentTrackID_Invalid
             )
             else { continue }
-            try copy.insertTimeRange(CMTimeRange(start: .zero, duration: duration), of: track, at: .zero)
+            // The video's own time range: a longer soundtrack would otherwise leave an empty tail.
+            let range = try await track.load(.timeRange)
+            try copy.insertTimeRange(range, of: track, at: range.start)
             copy.preferredTransform = try await track.load(.preferredTransform)
         }
         guard !composition.tracks.isEmpty else { throw MediaEngineError.noVideo(source) }
         try await export(
             composition,
+            metadata: asset.load(.metadata),
             preset: AVAssetExportPresetPassthrough,
             to: destination,
             fileType: fileType,
@@ -176,6 +233,7 @@ enum MediaEngine {
         }
         try await export(
             composition,
+            metadata: asset.load(.metadata),
             preset: AVAssetExportPresetPassthrough,
             to: destination,
             fileType: fileType,
@@ -192,16 +250,19 @@ enum MediaEngine {
     }
 
     /// An animated GIF of up to `maxDuration` seconds, `width` pixels wide, at `fps` frames per second.
+    /// GIF delays are whole hundredths of a second, so the default of 10 fps plays at exactly the video's
+    /// speed (12 fps would be stored as 8/100 s and play 4% fast). Returns whether the video was cut short.
     static func makeGIF(
-        _ source: URL, destination: URL, width: Int, fps: Double = 12, maxDuration: Double = 30,
+        _ source: URL, destination: URL, width: Int, fps: Double = 10, maxDuration: Double = 30,
         progress: @escaping Progress
-    ) async throws {
+    ) async throws -> Bool {
         let asset = AVURLAsset(url: source)
         guard try await !asset.loadTracks(withMediaType: .video).isEmpty else { throw MediaEngineError.noVideo(source) }
         // Streams and broken files have no usable duration (NaN would crash the frame count below).
         let length = try await asset.load(.duration)
         guard length.isNumeric, length.seconds > 0 else { throw MediaEngineError.unsupported(source) }
         let duration = min(length.seconds, maxDuration)
+        let isCut = length.seconds > maxDuration
         let frameCount = max(1, Int(duration * fps))
         let times = (0 ..< frameCount).map { CMTime(seconds: Double($0) / fps, preferredTimescale: 600) }
 
@@ -227,8 +288,11 @@ enum MediaEngine {
         ] as CFDictionary
 
         var written = 0
+        var previous: CGImage?
         for await result in generator.images(for: times) {
-            guard let image = try? result.image else { continue }
+            // A frame that can't be decoded repeats the one before, so the GIF keeps the video's pace.
+            guard let image = (try? result.image) ?? previous else { continue }
+            previous = image
             CGImageDestinationAddImage(gif, image, frameProperties)
             written += 1
             progress(Double(written) / Double(frameCount))
@@ -236,6 +300,7 @@ enum MediaEngine {
         try await removingOnFailure(destination) {
             guard written > 0, CGImageDestinationFinalize(gif) else { throw ImageEngineError.cannotWrite(.gif) }
         }
+        return isCut
     }
 
     // MARK: - Audio
@@ -248,9 +313,8 @@ enum MediaEngine {
         progress: @escaping Progress
     ) async throws {
         let asset = AVURLAsset(url: source)
-        guard let track = try await asset.loadTracks(withMediaType: .audio).first else {
-            throw MediaEngineError.noAudio(source)
-        }
+        let tracks = try await asset.loadTracks(withMediaType: .audio)
+        guard !tracks.isEmpty else { throw MediaEngineError.noAudio(source) }
         if format == .m4a {
             try await export(
                 asset,
@@ -260,32 +324,47 @@ enum MediaEngine {
                 progress: progress
             )
         } else {
-            try await writePCM(from: asset, track: track, to: destination, format: format, progress: progress)
+            try await writePCM(from: asset, tracks: tracks, to: destination, format: format, progress: progress)
         }
     }
 
+    /// Decodes to uncompressed PCM, keeping the source's quality: lossless sources keep their bit depth
+    /// (24 or 32 bits; float as 24-bit), a single track keeps all its channels (5.1 stays 5.1), and several tracks
+    /// (a video with mic and system audio) are mixed rather than all but the first dropped.
     private static func writePCM(
-        from asset: AVAsset, track: AVAssetTrack, to destination: URL, format: AudioFormat, progress: @escaping Progress
+        from asset: AVAsset, tracks: [AVAssetTrack], to destination: URL, format: AudioFormat,
+        progress: @escaping Progress
     ) async throws {
-        let descriptions = try await track.load(.formatDescriptions)
-        let basic = descriptions.first.flatMap { CMAudioFormatDescriptionGetStreamBasicDescription($0)?.pointee }
+        let description = try await tracks[0].load(.formatDescriptions).first
+        let basic = description.flatMap { CMAudioFormatDescriptionGetStreamBasicDescription($0)?.pointee }
         let sampleRate = basic?.mSampleRate ?? 44100
-        let channels = min(Int(basic?.mChannelsPerFrame ?? 2), 2)
         let duration = try await asset.load(.duration).seconds
 
-        let pcm: [String: Any] = [
+        var pcm: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
             AVSampleRateKey: sampleRate,
-            AVNumberOfChannelsKey: channels,
-            AVLinearPCMBitDepthKey: 16,
+            AVLinearPCMBitDepthKey: basic.map(Self.bitDepth) ?? 16,
             AVLinearPCMIsFloatKey: false,
             AVLinearPCMIsBigEndianKey: format == .aiff,
             AVLinearPCMIsNonInterleaved: false,
         ]
+        let channels = Int(basic?.mChannelsPerFrame ?? 2)
+        if tracks.count == 1, channels > 2, let layout = description.flatMap(Self.channelLayout) {
+            pcm[AVNumberOfChannelsKey] = channels
+            pcm[AVChannelLayoutKey] = layout
+        } else {
+            pcm[AVNumberOfChannelsKey] = min(max(channels, 1), 2)
+        }
         let reader = try AVAssetReader(asset: asset)
-        let output = AVAssetReaderTrackOutput(track: track, outputSettings: pcm)
+        let output: AVAssetReaderOutput = tracks.count == 1
+            ? AVAssetReaderTrackOutput(track: tracks[0], outputSettings: pcm)
+            : AVAssetReaderAudioMixOutput(audioTracks: tracks, audioSettings: pcm)
         reader.add(output)
         let writer = try AVAssetWriter(outputURL: destination, fileType: format.fileType)
+        // Settings the writer rejects would raise an exception (and end the app) when the input is made.
+        guard writer.canApply(outputSettings: pcm, forMediaType: .audio) else {
+            throw MediaEngineError.unsupported(destination)
+        }
         let input = AVAssetWriterInput(mediaType: .audio, outputSettings: pcm)
         input.expectsMediaDataInRealTime = false
         writer.add(input)
@@ -298,13 +377,17 @@ enum MediaEngine {
         // A failed or cancelled conversion leaves no truncated file behind.
         try await removingOnFailure(destination) {
             do {
+                var reported = 0.0
                 while let buffer = output.copyNextSampleBuffer() {
                     while !input.isReadyForMoreMediaData {
                         try await Task.sleep(for: .milliseconds(5))
                     }
                     guard input.append(buffer) else { break }
-                    if duration > 0 {
-                        progress(min(1, CMSampleBufferGetPresentationTimeStamp(buffer).seconds / duration))
+                    // Every percent, not every buffer: each report is a hop to the main actor.
+                    let fraction = duration > 0 ? CMSampleBufferGetPresentationTimeStamp(buffer).seconds / duration : 0
+                    if fraction - reported >= 0.01 {
+                        reported = fraction
+                        progress(min(1, fraction))
                     }
                 }
             } catch {
@@ -320,10 +403,46 @@ enum MediaEngine {
         }
     }
 
+    /// Integer bits per sample to write for a source: uncompressed and lossless formats say; compressed ones
+    /// (AAC, MP3) don't have one and get 16. Floating-point sources get 24-bit integers, since the writer
+    /// can't write floating-point WAV (and AIFF has none).
+    private static func bitDepth(of format: AudioStreamBasicDescription) -> Int {
+        switch format.mFormatID {
+        case kAudioFormatLinearPCM where format.mFormatFlags & kAudioFormatFlagIsFloat != 0:
+            24
+        case kAudioFormatLinearPCM:
+            [24, 32].contains(Int(format.mBitsPerChannel)) ? Int(format.mBitsPerChannel) : 16
+        case kAudioFormatAppleLossless, kAudioFormatFLAC:
+            // The flags hold the source depth: 1 = 16, 2 = 20, 3 = 24, 4 = 32 bits.
+            switch format.mFormatFlags {
+            case 2, 3: 24
+            case 4: 32
+            default: 16
+            }
+        default:
+            16
+        }
+    }
+
+    private static func channelLayout(of description: CMAudioFormatDescription) -> Data? {
+        var size = 0
+        guard let layout = CMAudioFormatDescriptionGetChannelLayout(description, sizeOut: &size), size > 0 else {
+            return nil
+        }
+        return Data(bytes: layout, count: size)
+    }
+
     // MARK: - Export
 
+    /// - Parameter metadata: For compositions, which have none of their own: the source's creation date,
+    ///   location and camera details, which would otherwise be lost.
     private static func export(
-        _ asset: AVAsset, preset: String, to destination: URL, fileType: AVFileType, progress: @escaping Progress
+        _ asset: AVAsset,
+        metadata: [AVMetadataItem]? = nil,
+        preset: String,
+        to destination: URL,
+        fileType: AVFileType,
+        progress: @escaping Progress
     ) async throws {
         guard let created = AVAssetExportSession(asset: asset, presetName: preset) else {
             throw MediaEngineError.exportFailed(String(localized: "Can't convert \(destination.lastPathComponent)"))
@@ -331,6 +450,9 @@ enum MediaEngine {
         // Only read for its progress stream while this function awaits the export.
         nonisolated(unsafe) let session = created
         session.shouldOptimizeForNetworkUse = true
+        if let metadata {
+            session.metadata = metadata
+        }
         let monitor = Task {
             for await state in session.states(updateInterval: 0.25) {
                 if case let .exporting(exportProgress) = state {

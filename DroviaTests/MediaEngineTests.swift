@@ -63,6 +63,37 @@ struct MediaEngineTests {
         return url
     }
 
+    /// The clip with the tone as its soundtrack and a creation date, as a QuickTime movie. `preset` decides
+    /// whether the sound stays PCM (passthrough) or becomes AAC.
+    private func makeVideoWithSound(
+        _ name: String = "talk.mov",
+        preset: String = AVAssetExportPresetHighestQuality
+    ) async throws -> URL {
+        let video = try await AVURLAsset(url: makeVideo("picture.mp4"))
+        let sound = try AVURLAsset(url: makeTone("sound.wav"))
+        let composition = AVMutableComposition()
+        for (asset, type) in [(video, AVMediaType.video), (sound, .audio)] {
+            let track = try #require(try await asset.loadTracks(withMediaType: type).first)
+            let copy = try #require(composition.addMutableTrack(withMediaType: type, preferredTrackID: 0))
+            try await copy.insertTimeRange(track.load(.timeRange), of: track, at: .zero)
+        }
+        let date = AVMutableMetadataItem()
+        date.identifier = .quickTimeMetadataCreationDate
+        date.value = "2024-05-01T10:00:00Z" as NSString
+        date.dataType = kCMMetadataBaseDataType_UTF8 as String
+        let session = try #require(AVAssetExportSession(asset: composition, presetName: preset))
+        session.metadata = [date]
+        let url = folder.url.appendingPathComponent(name)
+        try await session.export(to: url, as: .mov)
+        return url
+    }
+
+    private func creationDate(of url: URL) async throws -> String? {
+        let items = try await AVURLAsset(url: url).load(.metadata)
+        return try await AVMetadataItem.metadataItems(from: items, filteredByIdentifier: .quickTimeMetadataCreationDate)
+            .first?.load(.stringValue)
+    }
+
     private func videoSize(_ url: URL) async throws -> CGSize {
         let track = try #require(try await AVURLAsset(url: url).loadTracks(withMediaType: .video).first)
         let (size, transform) = try await track.load(.naturalSize, .preferredTransform)
@@ -82,7 +113,8 @@ struct MediaEngineTests {
     @Test func makesLoopingGIF() async throws {
         let source = try await makeVideo()
         let output = folder.url.appendingPathComponent("clip.gif")
-        try await MediaEngine.makeGIF(source, destination: output, width: 80, progress: noProgress)
+        let isCut = try await MediaEngine.makeGIF(source, destination: output, width: 80, progress: noProgress)
+        #expect(!isCut)
         let gif = try #require(CGImageSourceCreateWithURL(output as CFURL, nil))
         #expect(CGImageSourceGetCount(gif) >= 10)
         let properties = try #require(CGImageSourceCopyPropertiesAtIndex(gif, 0, nil) as? [CFString: Any])
@@ -107,13 +139,47 @@ struct MediaEngineTests {
         #expect(transform.a == 1 && transform.d == 1)
     }
 
-    @Test func removesAudioKeepingVideo() async throws {
-        let source = try await makeVideo()
-        let output = folder.url.appendingPathComponent("muted.mp4")
-        try await MediaEngine.removeAudio(source, destination: output, fileType: .mp4, progress: noProgress)
+    @Test func saysWhenGIFIsCutShort() async throws {
+        let output = folder.url.appendingPathComponent("short.gif")
+        let isCut = try await MediaEngine.makeGIF(
+            makeVideo(), destination: output, width: 80, maxDuration: 0.5, progress: noProgress
+        )
+        #expect(isCut)
+    }
+
+    @Test func removesAudioKeepingVideoAndCreationDate() async throws {
+        let source = try await makeVideoWithSound()
+        let output = folder.url.appendingPathComponent("muted.mov")
+        try await MediaEngine.removeAudio(source, destination: output, fileType: .mov, progress: noProgress)
         let asset = AVURLAsset(url: output)
         #expect(try await asset.loadTracks(withMediaType: .audio).isEmpty)
         #expect(try await !asset.loadTracks(withMediaType: .video).isEmpty)
+        #expect(try await creationDate(of: output) != nil)
+    }
+
+    @Test func rotationKeepsCreationDate() async throws {
+        let output = folder.url.appendingPathComponent("turned.mov")
+        try await MediaEngine.rotateClockwise(
+            makeVideoWithSound(), destination: output, fileType: .mov, progress: noProgress
+        )
+        #expect(try await creationDate(of: output) != nil)
+    }
+
+    @Test func mutingSilentVideoSaysSo() async throws {
+        await #expect(throws: MediaEngineError.self) {
+            try await MediaEngine.removeAudio(
+                makeVideo(), destination: folder.url.appendingPathComponent("m.mp4"), fileType: .mp4,
+                progress: noProgress
+            )
+        }
+    }
+
+    @Test func convertsMOVWithPCMSoundToMP4() async throws {
+        // PCM can't go into MP4 as is; the export session's own check doesn't know that.
+        let source = try await makeVideoWithSound("pcm.mov", preset: AVAssetExportPresetPassthrough)
+        let output = folder.url.appendingPathComponent("pcm.mp4")
+        try await MediaEngine.convert(source, to: .mp4, destination: output, progress: noProgress)
+        #expect(try await !AVURLAsset(url: output).loadTracks(withMediaType: .audio).isEmpty)
     }
 
     @Test func videoWithoutSoundCantBecomeAudio() async throws {
@@ -137,6 +203,14 @@ struct MediaEngineTests {
         try await MediaEngine.convertAudio(source, to: format, destination: output, progress: noProgress)
         let duration = try await AVURLAsset(url: output).load(.duration).seconds
         #expect(abs(duration - 0.5) < 0.1)
+    }
+
+    @Test(arguments: [AudioFormat.wav, .aiff])
+    func keepsHighResolutionAudio(as format: AudioFormat) async throws {
+        // The tone is 32-bit float; it used to come out as 16-bit.
+        let output = folder.url.appendingPathComponent("copy.\(format.rawValue)")
+        try await MediaEngine.convertAudio(makeTone(), to: format, destination: output, progress: noProgress)
+        #expect(try AVAudioFile(forReading: output).fileFormat.settings[AVLinearPCMBitDepthKey] as? Int == 24)
     }
 
     @Test func convertsM4ABackToWAV() async throws {

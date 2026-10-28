@@ -1677,6 +1677,16 @@
         }
       }
     },
+    "GIFs cover the first 30 seconds": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GIF содержат только первые 30 секунд"
+          }
+        }
+      }
+    },
     "General": {
       "localizations": {
         "ru": {
