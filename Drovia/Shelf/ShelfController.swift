@@ -4,7 +4,30 @@ import SwiftUI
 
 struct ShelfItem: Identifiable, Equatable {
     let id = UUID()
-    let url: URL
+    var url: URL
+    /// Follows the file when it's renamed or moved. (A file reference URL would too, but keeps reporting
+    /// the old path once it has looked it up.)
+    let bookmark: Data?
+
+    init(url: URL) {
+        self.url = url
+        bookmark = try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+    }
+
+    /// Where the file is now, if it still exists outside the Trash.
+    var currentURL: URL? {
+        if FileManager.default.fileExists(atPath: url.path) {
+            return url
+        }
+        guard let bookmark else { return nil }
+        var isStale = false
+        let options: URL.BookmarkResolutionOptions = [.withoutUI, .withoutMounting]
+        guard let moved = try? URL(
+            resolvingBookmarkData: bookmark, options: options, relativeTo: nil, bookmarkDataIsStale: &isStale
+        ) else { return nil }
+        let isGone = moved.path.contains("/.Trash/") || !FileManager.default.fileExists(atPath: moved.path)
+        return isGone ? nil : moved
+    }
 }
 
 @MainActor
@@ -28,10 +51,8 @@ final class ShelfController {
     private lazy var panel = makePanel()
     private var snapTask: Task<Void, Never>?
     private var isAdjustingFrame = false
-
-    var isVisible: Bool {
-        panel.isVisible
-    }
+    /// Where the user left the shelf, so it comes back there.
+    private var lastFrame: NSRect?
 
     func add(_ urls: [URL]) {
         let known = Set(model.items.map(\.url))
@@ -53,27 +74,42 @@ final class ShelfController {
         hide()
     }
 
-    func toggle() {
-        isVisible ? hide() : show()
-    }
-
     func show() {
+        pruneMissingFiles()
+        guard !model.items.isEmpty else { return }
         if !panel.isVisible {
-            placeInitially()
+            if let lastFrame, NSScreen.screens.contains(where: { $0.visibleFrame.intersects(lastFrame) }) {
+                setFrame(lastFrame)
+            } else {
+                placeInitially()
+            }
         }
         updateFrame()
         panel.orderFrontRegardless()
     }
 
     func hide() {
+        if panel.isVisible {
+            lastFrame = panel.frame
+        }
         panel.orderOut(nil)
     }
 
-    /// Drops items whose files were moved or deleted elsewhere.
+    /// Follows files that were renamed or moved, and drops those that were deleted or put in the Trash
+    /// (by an action, Undo, or elsewhere).
     func pruneMissingFiles() {
-        let missing = model.items.filter { !FileManager.default.fileExists(atPath: $0.url.path) }
+        var missing: Set<ShelfItem.ID> = []
+        for index in model.items.indices {
+            if let current = model.items[index].currentURL {
+                if current != model.items[index].url {
+                    model.items[index].url = current
+                }
+            } else {
+                missing.insert(model.items[index].id)
+            }
+        }
         if !missing.isEmpty {
-            remove(Set(missing.map(\.id)))
+            remove(missing)
         }
     }
 

@@ -32,7 +32,7 @@ final class OnboardingController: NSObject, NSWindowDelegate {
             return
         }
         let view = OnboardingView(
-            practiceFile: (try? SampleFile.url()) ?? URL(fileURLWithPath: "/"),
+            practiceFile: try? SampleFile.url(),
             history: history,
             onDragStart: { [weak self] in self?.onPracticeDragStart?($0) },
             onDragEnd: { [weak self] in self?.onPracticeDragEnd?() },

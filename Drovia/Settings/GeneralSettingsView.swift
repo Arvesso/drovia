@@ -1,3 +1,4 @@
+import ServiceManagement
 import SwiftUI
 
 struct GeneralSettingsView: View {
@@ -8,6 +9,14 @@ struct GeneralSettingsView: View {
         Form {
             Section {
                 Toggle("Open at login", isOn: $settings.launchAtLogin)
+                if settings.launchAtLoginNeedsApproval {
+                    HStack {
+                        Text("Allow Drovia in Login Items to finish.")
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Open Login Items") { SMAppService.openSystemSettingsLoginItems() }
+                    }
+                }
             }
 
             Section {
@@ -41,5 +50,7 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        // Login items can be changed in System Settings meanwhile.
+        .onAppear { settings.refreshLaunchAtLogin() }
     }
 }

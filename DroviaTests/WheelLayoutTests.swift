@@ -40,6 +40,20 @@ struct WheelLayoutTests {
         #expect(convert.first { $0.id == "convert.png" }?.kinds == [.image, .pdf])
     }
 
+    @Test func sectorAddedByAnUpdateTakesItsDefaultPlace() {
+        let defaults = ActionRegistry.sectors(for: .tools, layout: WheelLayout()).map(\.id)
+        // A full order saved before "resize" existed, with the user's own change: metadata moved first.
+        var saved = defaults.filter { $0 != "tools.resize" }
+        saved.removeAll { $0 == "tools.metadata" }
+        saved.insert("tools.metadata", at: 0)
+        var layout = WheelLayout()
+        layout.order[WheelKind.tools.rawValue] = saved
+        let order = ActionRegistry.sectors(for: .tools, layout: layout).map(\.id)
+        #expect(order.first == "tools.metadata")
+        let compress = order.firstIndex(of: "tools.compress")
+        #expect(order.firstIndex(of: "tools.resize") == compress.map { $0 + 1 })
+    }
+
     @Test func unknownIDsInStoredOrderAreIgnored() {
         var layout = WheelLayout()
         layout.order[WheelKind.actions.rawValue] = ["actions.removed-long-ago", "actions.copy"]

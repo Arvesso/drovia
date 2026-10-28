@@ -72,6 +72,9 @@ final class SettingsStore {
         didSet { updateLaunchAtLogin() }
     }
 
+    /// Registered, but the user still has to switch it on in System Settings → Login Items.
+    private(set) var launchAtLoginNeedsApproval = false
+
     var wheelSize: WheelSize {
         didSet { defaults.set(wheelSize.rawValue, forKey: Keys.wheelSize) }
     }
@@ -215,7 +218,8 @@ final class SettingsStore {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
-        launchAtLogin = SMAppService.mainApp.status == .enabled
+        launchAtLogin = [.enabled, .requiresApproval].contains(SMAppService.mainApp.status)
+        launchAtLoginNeedsApproval = SMAppService.mainApp.status == .requiresApproval
         wheelSize = defaults.enumValue(forKey: Keys.wheelSize) ?? .medium
         activationDelay = defaults.object(forKey: Keys.activationDelay) as? Double ?? 0
         hidesWheelOnModifierRelease = defaults.object(forKey: Keys.hidesWheelOnModifierRelease) as? Bool ?? true
@@ -244,7 +248,10 @@ final class SettingsStore {
         redactsCodes = defaults.object(forKey: Keys.redactsCodes) as? Bool ?? true
         videoCompression = defaults.enumValue(forKey: Keys.videoCompression) ?? .hevc1080
         gifWidth = defaults.object(forKey: Keys.gifWidth) as? Int ?? 480
-        terminalApp = defaults.enumValue(forKey: Keys.terminalApp) ?? .terminal
+        // An app since uninstalled falls back to Terminal, which is always there.
+        terminalApp = defaults.enumValue(forKey: Keys.terminalApp)
+            .flatMap { TerminalApp.installed.contains($0) ? $0 : nil }
+            ?? .terminal
         copyPathFormat = defaults.enumValue(forKey: Keys.copyPathFormat) ?? .posix
         favoriteFolders = defaults.stringArray(forKey: Keys.favoriteFolders) ?? []
         recentMoveFolders = defaults.stringArray(forKey: Keys.recentMoveFolders) ?? []
@@ -254,9 +261,19 @@ final class SettingsStore {
         recentMoveFolders = Array(([path] + recentMoveFolders.filter { $0 != path }).prefix(5))
     }
 
+    /// The user can change login items in System Settings at any time; called when Settings appears.
+    func refreshLaunchAtLogin() {
+        let status = SMAppService.mainApp.status
+        launchAtLoginNeedsApproval = status == .requiresApproval
+        if launchAtLogin != (status == .enabled || status == .requiresApproval) {
+            launchAtLogin = status == .enabled || status == .requiresApproval
+        }
+    }
+
     private func updateLaunchAtLogin() {
+        defer { launchAtLoginNeedsApproval = SMAppService.mainApp.status == .requiresApproval }
         let service = SMAppService.mainApp
-        guard launchAtLogin != (service.status == .enabled) else { return }
+        guard launchAtLogin != (service.status == .enabled || service.status == .requiresApproval) else { return }
         do {
             if launchAtLogin {
                 try service.register()
