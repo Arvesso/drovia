@@ -14,6 +14,7 @@ Thanks for helping! Bug reports, ideas and pull requests are all welcome.
 - `make lint` reports nothing (`make format` fixes it).
 - New user-facing strings are in `Drovia/Resources/Localizable.xcstrings` with English and Russian. `python3 Scripts/missing-strings.py` lists strings without a Russian translation. If you don't speak Russian, leave it untranslated and say so in the PR.
 - Keep pull requests focused on one change and describe what you tested by hand: drag-and-drop behavior can't be covered by unit tests.
+- Fill in the pull request template: the problem, the change, the tests, and what to check by hand.
 
 ## How the code is organized
 
@@ -44,4 +45,17 @@ The images in `docs/images` are rendered by the app itself: `make docs-images`.
 
 ## Reporting bugs
 
-Please include your macOS version, what you dragged (file type, which app it came from), which modifier you held, and what happened. `make logs` output while reproducing the problem helps a lot.
+Please use the bug report form: your macOS version, what you dragged (file type, which app it came from), which modifier you held, and what happened. `make logs` output while reproducing the problem helps a lot. Ideas go in the feature request form.
+
+## Labels
+
+An issue gets one type, one area and, once triaged, one priority:
+
+| Kind | Labels |
+| --- | --- |
+| Type | `bug`, `enhancement`, `security`, `performance`, `polish`, `documentation` |
+| Area | `area: wheel`, `area: images`, `area: pdf`, `area: media`, `area: files`, `area: recipes`, `area: editor`, `area: ui`, `area: build`, `area: localization` |
+| Priority | `priority: high` (data loss, crashes, hangs, a broken main flow), `priority: medium` (wrong results or friction in common use), `priority: low` (rare cases, polish) |
+| Status | `needs decision` (a product choice comes first), `unconfirmed` (seen in the code or reported, not reproduced yet) |
+
+GitHub's own labels (`duplicate`, `wontfix`, `good first issue`…) keep their usual meaning.

@@ -1,0 +1,42 @@
+name: Bug report
+description: Something doesn't work as it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you dragged (file type, which app it came from), which modifier you held or which shortcut you used, and the action you picked.
+      placeholder: |
+        1. Drag a HEIC photo from Finder
+        2. Hold ⌘ and drop it on Compress
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "26.1"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Drovia version
+      description: Settings → About, or the commit you built.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Output of `make logs` while reproducing the problem, if you can.
+      render: text
